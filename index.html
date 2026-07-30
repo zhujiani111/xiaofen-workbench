@@ -558,7 +558,7 @@ function rHot(){
         <span class="hot-tag ${item.tag}">${item.tt}</span>
         <span class="hot-source-badge ${item.src}">${item.src}</span>
         <span style="font-size:11px;color:var(--g500)">${item.tm||''}</span>${isP?' ⭐':''}
-        <div class="hot-title">${item.title}</div>
+        <div class="hot-title">${item.url?`<a href="${item.url}" target="_blank" title="查看详情">${item.title} ↗</a>`:item.title}</div>
         <div class="hot-desc">${item.desc||''}</div>
         ${item.angle?`<div class="hot-angle"><b>选题角度</b><br>${item.angle}</div>`:''}
         <div class="hot-meta">来源：${item.src}${item.score?` · 相关度 ${item.score}`:''}</div>
