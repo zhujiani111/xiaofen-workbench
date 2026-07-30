@@ -175,6 +175,17 @@ body{
 .hot-tag.safety{background:#FFE8D6;color:#E8734A}
 .hot-tag.emotion{background:#E8E0FF;color:#6E4FE8}
 
+/* 竞品动态 */
+.competitor-card{
+  padding:12px 14px;background:var(--w);border-radius:var(--r);
+  margin:8px 0;border:1px solid var(--p100);
+}
+.competitor-card .cname{font-size:13px;font-weight:700;color:var(--g900)}
+.competitor-card .cdir{font-size:10px;color:var(--p400);margin-left:6px}
+.competitor-card .ctitles{font-size:12px;color:var(--g700);margin-top:4px;line-height:1.8}
+.competitor-card .ctitles span{display:block;padding:2px 0}
+.competitor-card .ctitles span:before{content:'· ';color:var(--p300)}
+
 /* ====== 饮食 ====== */
 .food-log{display:flex;gap:8px;margin-bottom:12px}
 .food-meal{flex:1;padding:14px 6px;background:var(--p50);border-radius:var(--r);text-align:center;cursor:pointer;border:2px solid transparent}
@@ -340,6 +351,7 @@ body{
   <div class="section-title">📌 我的收藏</div><div id="pinnedList"></div>
   <div class="section-title">📊 上周选题周报</div><div id="weeklyReport"></div>
   <div class="section-title">🔥 最新热点</div><div id="hotList"></div>
+  <div class="section-title" style="margin-top:16px">👀 竞品公众号动态</div><div id="competitorList"></div>
 </div>
 
 <div class="tab-content" id="tab-food">
@@ -490,11 +502,12 @@ function weekSeed(){const d=new Date();const wk=Math.ceil((d-new Date(d.getFullY
 function seededRandom(seed){let s=seed;return()=>{s=(s*9301+49297)%233280;return s/233280}}
 
 let HOT_CACHE=[];
+let COMPETITOR_CACHE=[];
 async function refreshHot(){
   toast('🔄 更新中...');
   try{
     const resp=await fetch('./data/hot.json');
-    if(resp.ok){const data=await resp.json();if(data.topics&&data.topics.length){HOT_CACHE=data.topics;rHot();toast('✅ 已更新'+data.topics.length+'条');return}}
+    if(resp.ok){const data=await resp.json();if(data.topics&&data.topics.length){HOT_CACHE=data.topics;COMPETITOR_CACHE=data.competitors||[];rHot();toast('✅ 已更新'+data.topics.length+'条热点 + '+COMPETITOR_CACHE.length+'个竞品');return}}
   }catch(e){}
   // 网络不通时用本地动态数据
   genLocalData();
@@ -572,6 +585,16 @@ function rHot(){
     html+=`</div>`;
   });
   document.getElementById('hotList').innerHTML=html;
+
+  // 竞品公众号动态
+  const comps=COMPETITOR_CACHE.length?COMPETITOR_CACHE:[];
+  document.getElementById('competitorList').innerHTML=comps.length?comps.map(c=>{
+    const dirLabel={'育儿干货':'👶','中女话题':'♀️','消费安全':'🛡️','情绪共鸣':'💗','综合':'📊'};
+    return `<div class="competitor-card">
+      <span class="cname">${c.name}</span><span class="cdir">${dirLabel[c.direction]||'📊'} ${c.direction||''}</span>
+      <div class="ctitles">${(c.recent_titles||[]).map(t=>`<span>${t}</span>`).join('')}</div>
+    </div>`;
+  }).join(''):'<div style="text-align:center;padding:16px;color:var(--g500);font-size:13px">📡 竞品数据加载中，点「🔄 刷新热点」获取~</div>';
 }
 function toggleHC(i){const a=document.getElementById('hc'+i);a.classList.toggle('open');if(a.classList.contains('open'))document.getElementById('hi'+i).focus()}
 // DeepSeek API Key（GitHub Actions 自动注入，本地开发留空）
