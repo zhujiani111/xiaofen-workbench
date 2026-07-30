@@ -122,6 +122,8 @@ body{
 .hot-tag.competitor{background:#E0E8FF;color:#4A6FE8}
 .hot-tag.idea{background:#E0FFE8;color:#2E8B57}
 .hot-title{font-size:15px;font-weight:600;color:var(--g900);margin:6px 0 4px;display:block}
+.hot-title a{color:var(--g900);text-decoration:none}
+.hot-title a:hover{color:var(--p500);text-decoration:underline}
 .hot-meta{font-size:12px;color:var(--g500)}
 .hot-desc{font-size:13px;color:var(--g700);margin:4px 0;line-height:1.5}
 .hot-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
@@ -524,11 +526,7 @@ function rHot(){
     return `<div class="hot-item pinned">
       <span class="hot-tag ${item.tag}">${item.tt}</span>
       <span class="hot-source-badge ${item.src}">${item.src}</span>⭐
-      <div class="hot-title">${item.title}</div>
-      <div class="hot-desc">${item.desc}</div>
-      ${item.angle?`<div class="hot-angle"><b>选题角度</b><br>${item.angle}</div>`:''}
-      <div class="hot-actions">
-        <button class="hot-btn chat" onclick="toggleHC(${oi})">💬聊选题</button>
+      <div class="hot-title">${item.url?`<a href="${item.url}" target="_blank" title="查看详情">${item.title} ↗</a>`:item.title}</div>
         <button class="hot-btn unpin" onclick="togglePin(${oi})">取消</button>
       </div>
       <div class="hot-chat-area" id="hc${oi}"><div class="hot-chat-msgs" id="hm${oi}"><div class="am">🤖 你对这条收藏的选题有什么想法？</div></div><div class="hot-chat-row"><input id="hi${oi}" placeholder="说说想法..."><button onclick="sendHC(${oi})">发送</button></div></div>
@@ -576,7 +574,78 @@ function rHot(){
   document.getElementById('hotList').innerHTML=html;
 }
 function toggleHC(i){const a=document.getElementById('hc'+i);a.classList.toggle('open');if(a.classList.contains('open'))document.getElementById('hi'+i).focus()}
-function sendHC(i){const inp=document.getElementById('hi'+i),msg=inp.value.trim();if(!msg)return;const ms=document.getElementById('hm'+i);ms.innerHTML+=`<div class="um">💁‍♀️ ${msg}</div>`;inp.value='';const hotData=HOT_CACHE.length?HOT_CACHE:HOT;const reps=[`从「${hotData[i]?.title||'这个话题'}」切入很好。<br>📌标题1：数据+悬念<br>📌标题2：故事+共鸣<br>📌互动：结尾投票引导UGC`,`结合年糕妈妈调性：<br>🎯钩子："原来我不是一个人"<br>🎯结构：故事→数据→方案→互动<br>🎯差异化：闺蜜分享+干货路线`,`💡试试"热点引入→科普→自查"公式<br>💡工作日发干货，周末发情感`];setTimeout(()=>{ms.innerHTML+=`<div class="am">🤖 ${reps[Math.floor(Math.random()*reps.length)]}</div>`;ms.scrollTop=ms.scrollHeight},400+Math.random()*500)}
+// DeepSeek API Key（GitHub Actions 自动注入，本地开发留空）
+const DEEPSEEK_KEY='';
+
+async function sendHC(i){
+  const inp=document.getElementById('hi'+i),msg=inp.value.trim();
+  if(!msg)return;
+  const ms=document.getElementById('hm'+i);
+  ms.innerHTML+=`<div class="um">💁‍♀️ ${msg}</div>`;
+  inp.value='';
+
+  // 无 API Key 时回退到模板回复
+  if(!DEEPSEEK_KEY){
+    const hotData=HOT_CACHE.length?HOT_CACHE:HOT;
+    const item=hotData[i]||{};
+    const topicTitle=item.title||'这个话题';
+    const reps=[
+      `关于「${topicTitle}」，试试这个切入角度：先用一个真实故事引入，让读者有代入感；中间穿插数据或专业观点增加可信度；结尾抛一个开放式问题引导评论。标题可以试试"原来不止我一个人……"这类共鸣句式。`,
+      `「${topicTitle}」这个方向可以做系列：第一篇科普认知，第二篇实操指南，第三篇真实故事征集。节奏上工作日发干货、周末发轻松内容。`,
+      `建议从「${topicTitle}」延伸出3个具体选题：① 数据+悬念式标题的科普文 ② 第一人称故事+观点输出 ③ UGC征集+社群互动。可以根据近期数据表现选最合适的先做。`
+    ];
+    setTimeout(()=>{
+      ms.innerHTML+=`<div class="am">🤖 ${reps[Math.floor(Math.random()*reps.length)]}</div>`;
+      ms.scrollTop=ms.scrollHeight;
+    },400+Math.random()*500);
+    return;
+  }
+  // 显示思考中
+  ms.innerHTML+=`<div class="am" id="thinking${i}">🤖 思考中...</div>`;
+  ms.scrollTop=ms.scrollHeight;
+
+  const hotData=HOT_CACHE.length?HOT_CACHE:HOT;
+  const item=hotData[i]||{};
+  const topicTitle=item.title||'这个话题';
+  const topicDesc=item.desc||'';
+  const topicAngle=item.angle||'';
+
+  try{
+    const resp=await fetch('https://api.deepseek.com/v1/chat/completions',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+DEEPSEEK_KEY
+      },
+      body:JSON.stringify({
+        model:'deepseek-chat',
+        messages:[
+          {role:'system',content:'你是年糕妈妈公众号的选题顾问。年糕妈妈面向25-45岁已婚已育女性，内容方向：育儿干货、中女话题、消费安全、情绪共鸣。风格：接地气口语化、闺蜜聊天感、有生活温度和洞察锐度。回复简洁有力，2-4句话即可，不说客套话，直接给选题建议。'},
+          {role:'user',content:`当前在讨论的热点是：「${topicTitle}」\n热点描述：${topicDesc}\n已有选题角度：${topicAngle}\n\n用户说：${msg}\n\n请针对用户的问题给出选题建议。`}
+        ],
+        temperature:0.8,
+        max_tokens:500
+      })
+    });
+
+    // 移除思考中提示
+    const thinking=document.getElementById('thinking'+i);
+    if(thinking)thinking.remove();
+
+    if(resp.ok){
+      const data=await resp.json();
+      const reply=data.choices[0].message.content;
+      ms.innerHTML+=`<div class="am">🤖 ${reply}</div>`;
+    }else{
+      ms.innerHTML+=`<div class="am">🤖 哎呀，AI 暂时连不上，稍后再试试吧~</div>`;
+    }
+  }catch(e){
+    const thinking=document.getElementById('thinking'+i);
+    if(thinking)thinking.remove();
+    ms.innerHTML+=`<div class="am">🤖 网络不太好，点「🔄 刷新热点」后再试试~</div>`;
+  }
+  ms.scrollTop=ms.scrollHeight;
+}
 
 // ============ FOOD（保持原有逻辑） ============
 const FDB={

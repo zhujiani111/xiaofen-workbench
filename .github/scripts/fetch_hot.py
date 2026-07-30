@@ -117,6 +117,7 @@ def fetch_weibo_hot():
                     'hot': item.get('num', 0) or 0,
                     'desc': f"热搜第{item.get('rank', '?')}名 · 热度{item.get('num', '?')}",
                     'src': '微博',
+                    'url': f"https://s.weibo.com/weibo?q={requests.utils.quote(word)}",
                 })
     except Exception as e:
         print(f"  ⚠️ 微博: {e}")
@@ -148,6 +149,7 @@ def fetch_douyin_hot():
                         'hot': hot_val,
                         'desc': f"抖音热点 · 热度{hot_val}",
                         'src': '抖音',
+                        'url': item.get('url') or item.get('link') or f"https://www.douyin.com/search/{requests.utils.quote(title)}",
                     })
     except Exception as e:
         print(f"  ⚠️ 抖音: {e}")
@@ -179,6 +181,7 @@ def fetch_xiaohongshu_hot():
                     'hot': hot_val,
                     'desc': f"小红书热搜 · 热度{score_str}",
                     'src': '小红书',
+                    'url': item.get('link') or item.get('url') or f"https://www.xiaohongshu.com/search_result?keyword={requests.utils.quote(title)}",
                 })
     except Exception as e:
         print(f"  ⚠️ 小红书: {e}")
@@ -205,6 +208,7 @@ def fetch_baidu_hot():
                         'hot': hi,
                         'desc': f"百度热搜 · 指数{hot_nums[i] if i < len(hot_nums) else '🔥'}",
                         'src': '百度',
+                        'url': f"https://www.baidu.com/s?wd={requests.utils.quote(clean)}",
                     })
     except Exception as e:
         print(f"  ⚠️ 百度: {e}")
@@ -287,11 +291,67 @@ ANGLE_TEMPLATES = {
 
 
 def generate_angle(title, direction):
-    """规则模板生成选题角度"""
+    """用 DeepSeek 生成选题角度，失败时回退到规则模板"""
+    # 先尝试 DeepSeek
+    try:
+        return generate_angle_deepseek(title, direction)
+    except Exception as e:
+        print(f"  ⚠️ DeepSeek 选题角度生成失败: {e}，使用规则模板")
+    # 回退到规则模板
     templates = ANGLE_TEMPLATES.get(direction, ANGLE_TEMPLATES['emotion'])
     rng = random.Random(hash(title) % 1000)
     template = rng.choice(templates)
     return template.replace('{title}', title[:30])
+
+
+def generate_angle_deepseek(title, direction):
+    """调用 DeepSeek API 生成选题角度"""
+    api_key = os.environ.get('DEEPSEEK_API_KEY', '')
+    if not api_key:
+        raise Exception("No API key")
+
+    dir_labels = {
+        'parenting': '育儿干货', 'women': '中女话题', 'safety': '消费安全', 'emotion': '情绪共鸣'
+    }
+    dir_label = dir_labels.get(direction, direction)
+
+    prompt = f"""你是年糕妈妈公众号的选题顾问。年糕妈妈是一个面向25-45岁已婚已育女性的公众号，内容涵盖育儿干货、中女话题、消费安全、情绪共鸣四大方向。风格要求：接地气、口语化、闺蜜聊天感，有生活温度和洞察锐度。
+
+当前热点：「{title}」
+归属方向：{dir_label}
+
+请为这条热点写一段选题角度建议（100-150字），包含：
+1. 为什么这个热点适合年糕妈妈（1句话）
+2. 建议的文章切入角度和结构
+3. 标题方向建议（1-2个方向）
+4. 预期互动策略
+
+直接输出文案，不要用Markdown格式，不要编号。"""
+
+    resp = requests.post(
+        "https://api.deepseek.com/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": "你是年糕妈妈公众号的选题顾问。回复简洁有力，接地气口语化，不做作。每次回复控制在100-150字。"},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.8,
+            "max_tokens": 300,
+        },
+        timeout=30
+    )
+
+    if resp.status_code == 200:
+        data = resp.json()
+        content = data['choices'][0]['message']['content'].strip()
+        return f"选题角度：{content}"
+
+    raise Exception(f"DeepSeek API error: {resp.status_code}")
 
 
 # --- 备用池（12条，四方向各3条，带角度）---
@@ -406,6 +466,7 @@ def fetch_hot():
                 'title': item['title'],
                 'desc': item.get('desc', ''),
                 'src': item.get('src', ''),
+                'url': item.get('url', ''),
                 'tm': f"今天 {_now()}",
                 'score': score,
                 'angle': generate_angle(item['title'], tag),
