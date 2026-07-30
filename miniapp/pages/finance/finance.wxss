@@ -1,0 +1,33 @@
+/* pages/finance/finance.wxss */
+.container{padding:16rpx 24rpx 120rpx}
+.section-title{font-size:28rpx;font-weight:700;color:#E8557A;margin:24rpx 0 14rpx}
+.card{background:#fff;border-radius:20rpx;padding:24rpx;border:2rpx solid #FFE4EC}
+
+.quick-tags{display:flex;flex-wrap:wrap;gap:10rpx;margin-bottom:16rpx}
+.quick-tag{background:#FFE4EC;color:#E8557A;padding:10rpx 18rpx;border-radius:20rpx;font-size:22rpx}
+.quick-tag:active{background:#FFD1DC}
+
+.add-row{display:flex;gap:8rpx;margin-bottom:16rpx}
+.fin-input{flex:1;border:2rpx solid #FFD1DC;border-radius:16rpx;padding:12rpx;font-size:24rpx}
+.fin-picker{border:2rpx solid #FFD1DC;border-radius:16rpx;padding:12rpx 16rpx;font-size:22rpx;color:#616161}
+.fin-btn{background:#FF6B8A;color:#fff;border:none;border-radius:16rpx;padding:12rpx 24rpx;font-size:24rpx;font-weight:600}
+
+.fin-summary{display:flex;gap:10rpx;margin-bottom:16rpx}
+.fin-box{flex:1;background:#fff;border-radius:16rpx;padding:18rpx 8rpx;text-align:center;border:2rpx solid #FFE4EC}
+.amt{font-size:28rpx;font-weight:700;color:#FF6B8A;display:block}
+.lbl{font-size:18rpx;color:#9E9E9E;display:block;margin-top:4rpx}
+
+.budget-row{display:flex;justify-content:space-between;font-size:22rpx;color:#616161;margin-bottom:10rpx}
+.b-num{font-weight:700;color:#FF6B8A}
+.budget-bar{height:12rpx;background:#EEE;border-radius:6rpx;overflow:hidden;margin:12rpx 0}
+.budget-fill{height:100%;background:#FF8DA8;border-radius:6rpx}
+.budget-fill.warn{background:#E8557A}
+.budget-btn{background:#FFE4EC;color:#E8557A;border:none;border-radius:20rpx;font-size:22rpx;padding:8rpx 20rpx;margin-top:8rpx}
+
+.record-list{background:#fff;border-radius:16rpx;border:2rpx solid #FFE4EC;overflow:hidden}
+.record-row{display:flex;justify-content:space-between;align-items:center;padding:14rpx 20rpx;border-bottom:2rpx solid #F5F5F5;font-size:22rpx}
+.rec-amt{font-weight:600}
+.rec-amt.exp{color:#E8557A}
+.rec-amt.inc{color:#2E8B57}
+.del{color:#FF8DA8;font-size:28rpx;padding:0 8rpx}
+.empty{text-align:center;padding:30rpx;color:#9E9E9E;font-size:22rpx}

@@ -1,0 +1,24 @@
+/* pages/index/index.wxss */
+.container{padding:16rpx 24rpx 120rpx}
+.header{text-align:center;padding:32rpx 0 16rpx}
+.kitty{font-size:56rpx;display:block}
+.title{font-size:36rpx;font-weight:700;color:#E8557A}
+.date{font-size:22rpx;color:#FF8DA8;margin-top:4rpx}
+
+.stats{display:flex;gap:12rpx;margin:24rpx 0}
+.stat{flex:1;background:#fff;border-radius:20rpx;padding:20rpx 8rpx;text-align:center;border:2rpx solid #FFD1DC}
+.sn{font-size:32rpx;font-weight:700;color:#FF6B8A;display:block}
+.sl{font-size:18rpx;color:#9E9E9E;margin-top:4rpx;display:block}
+
+.section-title{font-size:28rpx;font-weight:700;color:#E8557A;margin:28rpx 0 16rpx}
+
+.quick-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16rpx}
+.quick{background:#fff;border-radius:20rpx;padding:24rpx 8rpx;text-align:center;border:2rpx solid #FFD1DC}
+.quick:active{background:#FFE4EC}
+.qicon{font-size:40rpx;display:block}
+.qlabel{font-size:18rpx;color:#FF6B8A;margin-top:6rpx;display:block}
+
+.week-card{display:flex;gap:12rpx}
+.week-item{flex:1;background:#fff;border-radius:16rpx;padding:20rpx 8rpx;text-align:center;border:2rpx solid #FFE4EC}
+.wi-num{font-size:28rpx;font-weight:700;color:#FF6B8A;display:block}
+.wi-label{font-size:18rpx;color:#9E9E9E;margin-top:4rpx;display:block}

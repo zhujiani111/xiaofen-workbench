@@ -1,0 +1,48 @@
+<!--pages/food/food.wxml-->
+<view class="container">
+  <view class="section-title">📸 拍照识别</view>
+  <view class="card center">
+    <button class="photo-btn" bindtap="takePhoto">📸 拍食物自动识别</button>
+    <image wx:if="{{photoUrl}}" src="{{photoUrl}}" mode="aspectFill" class="photo-preview"/>
+    <view wx:if="{{photoFoods.length}}" class="photo-results">
+      <text class="photo-hint">📸 可能是：</text>
+      <view class="food-options">
+        <view class="food-opt" wx:for="{{photoFoods}}" wx:key="index" bindtap="confirmFood" data-name="{{item}}">
+          <text>{{item}} ~{{foodDb[item].k}}kcal</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section-title">📅 今日饮食</view>
+  <view class="meals">
+    <view class="meal" wx:for="{{meals}}" wx:key="name" bindtap="addMeal" data-meal="{{item.key}}">
+      <text class="meal-icon">{{item.icon}}</text>
+      <text class="meal-name">{{item.name}}</text>
+      <text class="meal-kcal">{{item.kcal}}kcal</text>
+      <text wx:if="{{item.items.length}}" class="meal-detail">{{item.itemsStr}}</text>
+      <text wx:else class="meal-empty">暂无</text>
+    </view>
+  </view>
+
+  <view class="section-title">📊 营养摄入</view>
+  <view class="card">
+    <view class="nutri-row" wx:for="{{nutriBars}}" wx:key="label">
+      <text class="nutri-label">{{item.label}}</text>
+      <view class="nutri-track"><view class="nutri-fill" style="width:{{item.pct}}%;background:{{item.color}}"></view></view>
+      <text class="nutri-val">{{item.val}}/{{item.target}}g</text>
+    </view>
+    <view class="kcal-total">今日摄入：<text class="kcal-num">{{totalKcal}}</text> kcal</view>
+  </view>
+
+  <button class="add-btn" bindtap="showAddModal">+ 手动添加</button>
+
+  <view class="section-title">🍳 本周推荐菜单（点击看做法）</view>
+  <view class="menu-card" wx:for="{{menuList}}" wx:key="name" bindtap="showRecipe" data-name="{{item.name}}">
+    <text class="menu-title">{{item.name}} <text class="menu-kcal">~{{item.kcal}}kcal</text></text>
+    <text class="menu-cat">{{item.cat}} · 点击查看做法</text>
+    <view class="menu-rating">
+      <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this" class="star {{item.rating>=*this||*this<=3?'active':''}}" catchtap="rateMenu" data-name="{{item.name}}" data-rating="{{*this}}">{{item.rating>=*this||*this<=3?'⭐':'☆'}}</text>
+    </view>
+  </view>
+</view>

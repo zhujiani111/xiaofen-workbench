@@ -1,0 +1,30 @@
+<!--pages/english/english.wxml-->
+<view class="container">
+  <view class="section-title">📊 统计</view>
+  <view class="streak"><text class="sn">🔥 {{streak}}</text><text class="sl">连续打卡天数</text></view>
+  <view class="stats">
+    <view class="stat"><text class="sn2">{{wordsLearned}}</text><text class="sl2">📝已学</text></view>
+    <view class="stat"><text class="sn2">{{isDone?'✅':'⏳'}}</text><text class="sl2">今日</text></view>
+    <view class="stat"><text class="sn2">{{masteredCount}}</text><text class="sl2">⭐掌握</text></view>
+  </view>
+
+  <view class="section-title">📝 今日单词（15个）</view>
+  <view class="word-grid">
+    <view class="word-card {{item.mastered?'mastered':''}}" wx:for="{{words}}" wx:key="w">
+      <text class="w">{{item.w}}</text>
+      <text class="p">{{item.p}}</text>
+      <text class="m">{{item.m}}</text>
+      <text wx:if="{{!item.mastered}}" class="kb" bindtap="masterWord" data-w="{{item.w}}">✅认识</text>
+      <text wx:else class="md">已掌握✓</text>
+    </view>
+  </view>
+
+  <view wx:if="{{showScenario}}" class="section-title">💼 今日职场英语</view>
+  <view wx:if="{{showScenario}}" class="scenario-card">
+    <text class="sc-title">{{scenario.title}}</text>
+    <text class="sc-content">{{scenario.content}}</text>
+    <text class="sc-tip">{{scenario.tip}}</text>
+  </view>
+
+  <button class="done-btn" bindtap="markDone">✅ 完成今日学习</button>
+</view>

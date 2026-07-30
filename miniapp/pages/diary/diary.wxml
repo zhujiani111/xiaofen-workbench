@@ -1,0 +1,36 @@
+<!--pages/diary/diary.wxml-->
+<view class="container">
+  <view class="section-title">💭 今日引导</view>
+  <view class="guide">
+    <view wx:if="{{step===0}}" class="step">
+      <text class="sq">🌸 今天最让你印象深刻的一件事？</text>
+      <input class="si" placeholder="比如：早上地铁上看到一个小朋友给妈妈让座..." value="{{a0}}" bindinput="onA0"/>
+      <button class="sb" bindtap="nextStep">下一步 →</button>
+    </view>
+    <view wx:if="{{step===1}}" class="step">
+      <text class="sq">💭 这件事让你有什么感觉？为什么？</text>
+      <input class="si" placeholder="开心/感动/生气...因为..." value="{{a1}}" bindinput="onA1"/>
+      <button class="sb" bindtap="nextStep">✨ 生成日记</button>
+    </view>
+    <view wx:if="{{step===2}}" class="step done-step">
+      <text class="sq">✨ 日记已生成！</text>
+      <text class="sh">可在下方编辑后保存</text>
+    </view>
+  </view>
+
+  <button class="photo-btn" bindtap="takePhoto">📸 拍照</button>
+  <image wx:if="{{photoUrl}}" src="{{photoUrl}}" mode="aspectFill" class="photo"/>
+
+  <textarea class="diary-input" placeholder="或者自己随便写写..." value="{{diaryText}}" bindinput="onDiaryText"/>
+  <view class="moods">
+    <text wx:for="{{moods}}" wx:key="*this" class="mood {{mood===*this?'active':''}}" bindtap="setMood" data-m="{{*this}}">{{*this}}</text>
+  </view>
+  <button class="save-btn" bindtap="saveDiary">💾 保存日记</button>
+
+  <view class="section-title">📔 日记本</view>
+  <view class="diary-item" wx:for="{{entries}}" wx:key="index">
+    <view class="di-row"><text class="di-date">{{item.date}}</text><text class="di-mood">{{item.mood}}</text></view>
+    <image wx:if="{{item.photo}}" src="{{item.photo}}" mode="aspectFill" class="di-photo"/>
+    <text class="di-text">{{item.text}}</text>
+  </view>
+</view>

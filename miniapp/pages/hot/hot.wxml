@@ -1,0 +1,54 @@
+<!--pages/hot/hot.wxml-->
+<view class="container">
+  <view class="section-title">📊 今日概览</view>
+  <view class="stats">
+    <view class="stat"><text class="sn">{{newsCount}}</text><text class="sl">📰新闻</text></view>
+    <view class="stat"><text class="sn">{{trendCount}}</text><text class="sl">📈趋势</text></view>
+    <view class="stat"><text class="sn">{{compCount}}</text><text class="sl">👀竞品</text></view>
+    <view class="stat"><text class="sn">{{pinnedCount}}</text><text class="sl">⭐收藏</text></view>
+  </view>
+
+  <button class="refresh-btn" bindtap="refresh">🔄 刷新热点</button>
+
+  <view class="section-title">📌 我的收藏</view>
+  <view wx:if="{{pinnedList.length}}">
+    <view class="hot-card pinned" wx:for="{{pinnedList}}" wx:key="index">
+      <view class="hot-tags">
+        <text class="tag {{item.tag}}">{{item.tt}}</text>
+        <text class="pin-star">⭐</text>
+        <text class="time">{{item.tm}}</text>
+      </view>
+      <text class="hot-title">{{item.title}}</text>
+      <text class="hot-desc">{{item.desc}}</text>
+      <text class="hot-src">来源：{{item.src}}</text>
+      <view class="hot-actions">
+        <button class="act-btn chat" bindtap="chatTopic" data-idx="{{item.origIdx}}">💬聊选题</button>
+        <button class="act-btn unpin" bindtap="togglePin" data-idx="{{item.origIdx}}">取消收藏</button>
+      </view>
+    </view>
+  </view>
+  <view wx:else class="empty">还没有收藏的热点，点击下方 ⭐ 收藏吧~</view>
+
+  <view class="section-title">📊 上周选题周报</view>
+  <view wx:if="{{isMonday}}" class="report">
+    <text class="report-title">📊 上周选题回顾 & 本周方向</text>
+    <text class="report-text">📌 上周值得关注：\n1.「更年期+青春期」双期话题\n2.「暑假回老家」怀旧情感\n3.「35岁小肚子」体态管理\n\n🎯 本周可操作方向：\n• 发起UGC征集\n• 准备系列大纲\n• 关注消费安全热点\n\n💡 节奏：周一干货|周三情感|周五轻松|周末互动</text>
+  </view>
+  <view wx:else class="empty">📅 每周一自动汇总，记得来看~</view>
+
+  <view class="section-title">🔥 最新热点</view>
+  <view class="hot-card" wx:for="{{hotList}}" wx:key="index">
+    <view class="hot-tags">
+      <text class="tag {{item.tag}}">{{item.tt}}</text>
+      <text wx:if="{{item.isPinned}}" class="pin-star">⭐</text>
+      <text class="time">{{item.tm}}</text>
+    </view>
+    <text class="hot-title">{{item.title}}</text>
+    <text class="hot-desc">{{item.desc}}</text>
+    <text class="hot-src">来源：{{item.src}}</text>
+    <view class="hot-actions">
+      <button class="act-btn chat" bindtap="chatTopic" data-idx="{{index}}">💬聊选题</button>
+      <button class="act-btn {{item.isPinned?'unpin':'pin'}}" bindtap="togglePin" data-idx="{{index}}">{{item.isPinned?'取消':'⭐收藏'}}</button>
+    </view>
+  </view>
+</view>

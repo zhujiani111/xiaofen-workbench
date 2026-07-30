@@ -1,0 +1,37 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/hot/hot",
+    "pages/food/food",
+    "pages/exercise/exercise",
+    "pages/finance/finance",
+    "pages/reading/reading",
+    "pages/diary/diary",
+    "pages/english/english"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#FFB6C9",
+    "navigationBarTitleText": "小粉工作台",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#FFF0F5"
+  },
+  "tabBar": {
+    "color": "#9E9E9E",
+    "selectedColor": "#FF6B8A",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {"pagePath": "pages/index/index", "text": "🏠", "iconPath": "images/home.png", "selectedIconPath": "images/home-active.png"},
+      {"pagePath": "pages/hot/hot", "text": "💊热点", "iconPath": "images/hot.png", "selectedIconPath": "images/hot-active.png"},
+      {"pagePath": "pages/food/food", "text": "🍱饮食", "iconPath": "images/food.png", "selectedIconPath": "images/food-active.png"},
+      {"pagePath": "pages/exercise/exercise", "text": "🏃运动", "iconPath": "images/ex.png", "selectedIconPath": "images/ex-active.png"},
+      {"pagePath": "pages/finance/finance", "text": "💰记账", "iconPath": "images/fin.png", "selectedIconPath": "images/fin-active.png"},
+      {"pagePath": "pages/reading/reading", "text": "📖阅读", "iconPath": "images/read.png", "selectedIconPath": "images/read-active.png"},
+      {"pagePath": "pages/diary/diary", "text": "🌸日记", "iconPath": "images/diary.png", "selectedIconPath": "images/diary-active.png"},
+      {"pagePath": "pages/english/english", "text": "🇬🇧英语", "iconPath": "images/eng.png", "selectedIconPath": "images/eng-active.png"}
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "cloud": true
+}

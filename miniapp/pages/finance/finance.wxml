@@ -1,0 +1,45 @@
+<!--pages/finance/finance.wxml-->
+<view class="container">
+  <view class="section-title">⚡ 快速记账</view>
+  <view class="quick-tags">
+    <text class="quick-tag" bindtap="quickRecord" data-amt="35" data-cat="餐饮" data-type="expense">🍜午餐35</text>
+    <text class="quick-tag" bindtap="quickRecord" data-amt="6" data-cat="交通" data-type="expense">🚇地铁6</text>
+    <text class="quick-tag" bindtap="quickRecord" data-amt="25" data-cat="餐饮" data-type="expense">☕咖啡25</text>
+    <text class="quick-tag" bindtap="quickRecord" data-amt="45" data-cat="餐饮" data-type="expense">🥡外卖45</text>
+    <text class="quick-tag" bindtap="quickRecord" data-amt="0" data-cat="其他" data-type="income">💳工资</text>
+  </view>
+  <view class="add-row">
+    <input class="fin-input" placeholder="金额" value="{{amount}}" bindinput="onAmount"/>
+    <picker class="fin-picker" range="{{types}}" value="{{typeIdx}}" bindchange="onType"><text>{{types[typeIdx]}}</text></picker>
+    <picker class="fin-picker" range="{{cats}}" value="{{catIdx}}" bindchange="onCat"><text>{{cats[catIdx]}}</text></picker>
+    <button class="fin-btn" bindtap="addRecord">记</button>
+  </view>
+
+  <view class="section-title">💰 本月概览</view>
+  <view class="fin-summary">
+    <view class="fin-box expense"><text class="amt">{{totalExp}}</text><text class="lbl">支出</text></view>
+    <view class="fin-box income"><text class="amt">{{totalInc}}</text><text class="lbl">收入</text></view>
+    <view class="fin-box"><text class="amt">{{balance}}</text><text class="lbl">结余</text></view>
+  </view>
+
+  <view class="section-title">🎯 预算</view>
+  <view class="card">
+    <view class="budget-row">
+      <text>预算：<text class="b-num">¥{{budget}}</text></text>
+      <text>已用：<text class="b-num">¥{{monthExp}}</text></text>
+      <text>剩余：<text class="b-num" style="color:{{remain<0?'#E8557A':'#2E8B57'}}">¥{{remain}}</text></text>
+    </view>
+    <view class="budget-bar"><view class="budget-fill {{remain<0?'warn':''}}" style="width:{{budgetPct}}%"></view></view>
+    <button class="budget-btn" bindtap="setBudget">修改预算</button>
+  </view>
+
+  <view class="section-title">📋 最近记录</view>
+  <view class="record-list">
+    <view class="record-row" wx:for="{{records}}" wx:key="index">
+      <text>{{item.cat}} {{item.note}}</text>
+      <text class="rec-amt {{item.type==='expense'?'exp':'inc'}}">{{item.type==='expense'?'-':'+'}}¥{{item.amount}}</text>
+      <text class="del" bindtap="delRecord" data-idx="{{item.realIdx}}">×</text>
+    </view>
+    <view wx:if="{{!records.length}}" class="empty">还没有记录，开始记账吧~</view>
+  </view>
+</view>

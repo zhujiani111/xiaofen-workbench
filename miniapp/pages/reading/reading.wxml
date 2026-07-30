@@ -1,0 +1,82 @@
+<!--pages/reading/reading.wxml-->
+<view class="container">
+  <view class="subtabs">
+    <text class="stab {{tab==='recommend'?'active':''}}" bindtap="switchTab" data-tab="recommend">📚推荐</text>
+    <text class="stab {{tab==='shelf'?'active':''}}" bindtap="switchTab" data-tab="shelf">📖书架</text>
+    <text class="stab {{tab==='search'?'active':''}}" bindtap="switchTab" data-tab="search">🔍搜书</text>
+  </view>
+
+  <!-- 推荐 -->
+  <view wx:if="{{tab==='recommend'}}">
+    <button class="refresh-btn" bindtap="refreshBooks">🔄 换一批</button>
+    <view class="book-card" wx:for="{{recBooks}}" wx:key="id" bindtap="{{item.onShelf?'readBook':'addShelf'}}" data-id="{{item.id}}">
+      <view class="bc-cover">{{item.emoji}}</view>
+      <view class="bc-info">
+        <text class="bc-title">{{item.title}}</text>
+        <text class="bc-author">{{item.author}} · {{item.cat}}</text>
+        <text class="bc-desc">{{item.desc}}</text>
+        <text class="bc-action">{{item.onShelf?'点击阅读':'点击加入书架'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 书架 -->
+  <view wx:if="{{tab==='shelf'}}">
+    <view class="section-title">📖 在读</view>
+    <view wx:if="{{reading.length}}">
+      <view class="book-card" wx:for="{{reading}}" wx:key="id" bindtap="readBook" data-id="{{item.id}}">
+        <view class="bc-cover">{{item.emoji}}</view>
+        <view class="bc-info">
+          <text class="bc-title">{{item.title}}</text>
+          <text class="bc-author">{{item.author}}</text>
+          <view class="bc-progress-bar"><view class="bc-progress-fill" style="width:{{item.pct}}%"></view></view>
+          <text class="bc-progress-label">进度 {{item.pct}}% · {{item.chapters}}章</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty">📚 去「推荐」或「搜书」添加想读的书~</view>
+
+    <view class="section-title">✅ 已读完</view>
+    <view wx:if="{{done.length}}">
+      <view class="book-card done" wx:for="{{done}}" wx:key="id" bindtap="readBook" data-id="{{item.id}}">
+        <view class="bc-cover">{{item.emoji}}</view>
+        <view class="bc-info">
+          <text class="bc-title">{{item.title}} ✅</text>
+          <text class="bc-author">{{item.author}}</text>
+          <view class="bc-progress-bar"><view class="bc-progress-fill" style="width:100%;background:#2E8B57"></view></view>
+          <text class="bc-progress-label">已读完 🎉</text>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty">还没有读完的书，加油~</view>
+  </view>
+
+  <!-- 搜书 -->
+  <view wx:if="{{tab==='search'}}">
+    <view class="search-row">
+      <input class="search-input" placeholder="搜书名、作者..." value="{{sq}}" bindinput="onSearchInput"/>
+      <button class="search-btn" bindtap="doSearch">搜索</button>
+    </view>
+    <view wx:if="{{searching}}" class="empty">🔍 搜索中...</view>
+    <view wx:if="{{searchResults.length}}">
+      <view class="search-item" wx:for="{{searchResults}}" wx:key="id">
+        <view><text class="si-title">{{item.title}}</text><text class="si-author">{{item.author}}</text></view>
+        <text wx:if="{{item.onShelf}}" class="si-onshelf">已在书架</text>
+        <button wx:else class="si-add" bindtap="addSearchToShelf" data-id="{{item.id}}" data-title="{{item.title}}" data-author="{{item.author}}">+书架</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 金句 -->
+  <view class="section-title">💬 今日金句</view>
+  <view class="quote-card">"{{quote.text}}"<text class="quote-src">—— {{quote.src}}</text></view>
+
+  <!-- 笔记 -->
+  <view class="section-title">✍️ 读书笔记</view>
+  <textarea class="note-input" placeholder="今天读了什么？有什么想法？" value="{{noteText}}" bindinput="onNoteInput"/>
+  <button class="note-btn" bindtap="saveNote">保存笔记</button>
+  <view class="note-item" wx:for="{{notes}}" wx:key="index">
+    <text class="ni-date">{{item.date}}</text>
+    <text class="ni-text">{{item.text}}</text>
+  </view>
+</view>

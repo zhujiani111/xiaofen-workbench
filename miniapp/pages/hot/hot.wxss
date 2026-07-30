@@ -1,0 +1,34 @@
+/* pages/hot/hot.wxss */
+.container{padding:16rpx 24rpx 120rpx}
+.section-title{font-size:28rpx;font-weight:700;color:#E8557A;margin:24rpx 0 14rpx}
+.stats{display:flex;gap:10rpx}
+.stat{flex:1;background:#fff;border-radius:16rpx;padding:16rpx 6rpx;text-align:center;border:2rpx solid #FFD1DC}
+.sn{font-size:28rpx;font-weight:700;color:#FF6B8A;display:block}
+.sl{font-size:16rpx;color:#9E9E9E;margin-top:2rpx;display:block}
+
+.refresh-btn{background:#FFE4EC;color:#E8557A;border:none;border-radius:28rpx;font-size:24rpx;padding:12rpx 28rpx;margin:16rpx 0}
+
+.hot-card{background:#FFF0F5;border-radius:20rpx;padding:20rpx;margin-bottom:16rpx;border-left:6rpx solid #FF8DA8}
+.hot-card.pinned{border-left-color:#FFB347;background:#FFF8F0}
+.hot-tags{display:flex;align-items:center;gap:8rpx;margin-bottom:8rpx}
+.tag{font-size:18rpx;padding:2rpx 14rpx;border-radius:16rpx;font-weight:600}
+.tag.news{background:#FFE0E0;color:#E8557A}
+.tag.trend{background:#FFE8D6;color:#E8734A}
+.tag.competitor{background:#E0E8FF;color:#4A6FE8}
+.tag.idea{background:#E0FFE8;color:#2E8B57}
+.pin-star{font-size:20rpx}
+.time{font-size:18rpx;color:#9E9E9E;margin-left:auto}
+.hot-title{font-size:26rpx;font-weight:600;color:#212121;display:block;margin:6rpx 0}
+.hot-desc{font-size:22rpx;color:#616161;display:block;margin:4rpx 0;line-height:1.4}
+.hot-src{font-size:18rpx;color:#9E9E9E;display:block}
+.hot-actions{display:flex;gap:10rpx;margin-top:12rpx}
+.act-btn{font-size:20rpx;padding:8rpx 18rpx;border-radius:24rpx;border:none;font-weight:600}
+.act-btn.chat{background:#FF6B8A;color:#fff}
+.act-btn.pin{background:#FFB347;color:#fff}
+.act-btn.unpin{background:#E0E0E0;color:#616161}
+
+.report{background:linear-gradient(135deg,#FFF8F0,#FFF0F5);border:2rpx dashed #FFB6C9;border-radius:20rpx;padding:20rpx}
+.report-title{font-size:26rpx;color:#E8557A;font-weight:700;display:block;margin-bottom:10rpx}
+.report-text{font-size:22rpx;color:#616161;line-height:1.6;white-space:pre-line;display:block}
+
+.empty{text-align:center;padding:30rpx;color:#9E9E9E;font-size:22rpx}

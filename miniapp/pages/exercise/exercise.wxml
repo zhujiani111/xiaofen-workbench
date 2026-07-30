@@ -1,0 +1,22 @@
+<!--pages/exercise/exercise.wxml-->
+<view class="container">
+  <view class="section-title">📊 本周打卡</view>
+  <view class="stats">
+    <view class="stat"><text class="sn">{{doneCount}}/{{activeCount}}</text><text class="sl">打卡</text></view>
+    <view class="stat"><text class="sn">{{streak}}</text><text class="sl">🔥连周</text></view>
+    <view class="stat"><text class="sn">{{steps}}</text><text class="sl">🚶今日步数</text></view>
+    <view class="stat"><text class="sn">53kg</text><text class="sl">体重</text></view>
+  </view>
+
+  <view class="section-title">📋 本周计划（3-4次/周）</view>
+  <view class="ex-day {{idx===todayIdx?'today':''}} {{!item.active?'rest':''}}" wx:for="{{plan}}" wx:key="day">
+    <text class="dt">{{item.day}} · {{item.type}} · {{item.focus}} {{idx===todayIdx?'👈':''}} {{!item.active?'（休息）':''}}</text>
+    <view class="ex-item" wx:for="{{item.items}}" wx:for-item="it" wx:key="name">
+      <view class="ex-check {{wd[item.day+'-'+idx2]?'done':''}}" bindtap="toggle" data-key="{{item.day}}-{{idx2}}">
+        <text wx:if="{{wd[item.day+'-'+idx2]}}">✓</text>
+      </view>
+      <text>{{it.name}} <text class="ex-dur">({{it.dur}})</text></text>
+      <text wx:if="{{it.link}}" class="ex-link" bindtap="openLink" data-link="{{it.link}}">📺</text>
+    </view>
+  </view>
+</view>

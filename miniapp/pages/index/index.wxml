@@ -1,0 +1,79 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="kitty">🎀</text>
+    <text class="title">小粉工作台</text>
+    <text class="date">{{dateStr}}</text>
+  </view>
+
+  <view class="stats">
+    <view class="stat" bindtap="goPage" data-page="hot">
+      <text class="sn">{{hotCount}}</text>
+      <text class="sl">💊新热点</text>
+    </view>
+    <view class="stat" bindtap="goPage" data-page="food">
+      <text class="sn">{{todayKcal}}</text>
+      <text class="sl">🍱今日kcal</text>
+    </view>
+    <view class="stat" bindtap="goPage" data-page="exercise">
+      <text class="sn">{{exDone}}/{{exTotal}}</text>
+      <text class="sl">🏃运动打卡</text>
+    </view>
+    <view class="stat" bindtap="goPage" data-page="finance">
+      <text class="sn">¥{{monthExp}}</text>
+      <text class="sl">💰本月支出</text>
+    </view>
+  </view>
+
+  <view class="section-title">📋 快捷入口</view>
+  <view class="quick-grid">
+    <view class="quick" bindtap="goPage" data-page="hot">
+      <text class="qicon">💊</text>
+      <text class="qlabel">工作热点</text>
+    </view>
+    <view class="quick" bindtap="goPage" data-page="food">
+      <text class="qicon">🍱</text>
+      <text class="qlabel">好好吃饭</text>
+    </view>
+    <view class="quick" bindtap="goPage" data-page="exercise">
+      <text class="qicon">🏃</text>
+      <text class="qlabel">运动跟练</text>
+    </view>
+    <view class="quick" bindtap="goPage" data-page="finance">
+      <text class="qicon">💰</text>
+      <text class="qlabel">记账本</text>
+    </view>
+    <view class="quick" bindtap="goPage" data-page="reading">
+      <text class="qicon">📖</text>
+      <text class="qlabel">阅读打卡</text>
+    </view>
+    <view class="quick" bindtap="goPage" data-page="diary">
+      <text class="qicon">🌸</text>
+      <text class="qlabel">幸福日记</text>
+    </view>
+    <view class="quick" bindtap="goPage" data-page="english">
+      <text class="qicon">🇬🇧</text>
+      <text class="qlabel">英语学习</text>
+    </view>
+  </view>
+
+  <view class="section-title">📊 本周概览</view>
+  <view class="week-card">
+    <view class="week-item">
+      <text class="wi-num">{{readBooks}}</text>
+      <text class="wi-label">📖在读</text>
+    </view>
+    <view class="week-item">
+      <text class="wi-num">{{engStreak}}</text>
+      <text class="wi-label">🔥英语连签</text>
+    </view>
+    <view class="week-item">
+      <text class="wi-num">{{diaryCount}}</text>
+      <text class="wi-label">🌸日记</text>
+    </view>
+    <view class="week-item">
+      <text class="wi-num">{{budgetRemain}}</text>
+      <text class="wi-label">💵预算剩余</text>
+    </view>
+  </view>
+</view>

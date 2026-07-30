@@ -1,0 +1,18 @@
+/* pages/exercise/exercise.wxss */
+.container{padding:16rpx 24rpx 120rpx}
+.section-title{font-size:28rpx;font-weight:700;color:#E8557A;margin:24rpx 0 14rpx}
+.stats{display:flex;gap:10rpx}
+.stat{flex:1;background:#fff;border-radius:16rpx;padding:16rpx 6rpx;text-align:center;border:2rpx solid #FFD1DC}
+.sn{font-size:28rpx;font-weight:700;color:#FF6B8A;display:block}
+.sl{font-size:16rpx;color:#9E9E9E;margin-top:2rpx;display:block}
+
+.ex-day{background:#fff;border-radius:16rpx;padding:18rpx;margin-bottom:12rpx;border:2rpx solid #FFD1DC}
+.ex-day.today{border-color:#FF6B8A;background:#FFF0F5}
+.ex-day.rest{opacity:.5}
+.dt{font-size:24rpx;font-weight:700;color:#E8557A;display:block;margin-bottom:10rpx}
+.ex-item{display:flex;align-items:center;gap:10rpx;padding:8rpx 0;border-bottom:2rpx dashed #FFE4EC;font-size:22rpx}
+.ex-item:last-child{border-bottom:none}
+.ex-check{width:36rpx;height:36rpx;border-radius:50%;border:3rpx solid #FFB6C9;display:flex;align-items:center;justify-content:center;font-size:20rpx;flex-shrink:0}
+.ex-check.done{background:#FF8DA8;border-color:#FF8DA8;color:#fff}
+.ex-dur{font-size:18rpx;color:#9E9E9E}
+.ex-link{font-size:20rpx;color:#FF6B8A;margin-left:auto}

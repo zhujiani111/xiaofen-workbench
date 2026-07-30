@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="小粉工作台">
+<meta name="theme-color" content="#FFF0F5">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>🌸 小粉工作台</title>
+<style>
+:root{
+  --p50:#FFF0F5;--p100:#FFE4EC;--p200:#FFD1DC;--p300:#FFB6C9;
+  --p400:#FF8DA8;--p500:#FF6B8A;--p600:#E8557A;
+  --w:#FFF;--g50:#FAFAFA;--g100:#F5F5F5;--g200:#EEE;--g300:#E0E0E0;
+  --g500:#9E9E9E;--g700:#616161;--g900:#212121;
+  --shadow:0 2px 8px rgba(255,107,138,0.1);
+  --r:12px;--safe:env(safe-area-inset-bottom,16px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  background:var(--p50);color:var(--g900);min-height:100dvh;
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;user-select:none;overflow-x:hidden
+}
+.header{
+  background:linear-gradient(135deg,var(--p200),var(--p100));
+  padding:12px 16px 8px;text-align:center;position:sticky;top:0;z-index:100;
+  border-bottom:2px solid var(--p300)
+}
+.header-kitty{font-size:26px;display:block;animation:bounce 2s infinite}
+.header-title{font-size:17px;font-weight:700;color:var(--p600)}
+.header-date{font-size:10px;color:var(--p500);margin-top:1px}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.tab-nav{
+  display:flex;overflow-x:auto;padding:6px 7px;gap:4px;background:var(--w);
+  border-bottom:1px solid var(--p100);position:sticky;top:72px;z-index:99;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch
+}
+.tab-nav::-webkit-scrollbar{display:none}
+.tab-btn{
+  flex-shrink:0;padding:5px 11px;border-radius:15px;border:2px solid var(--p200);
+  background:var(--w);color:var(--p500);font-size:10px;font-weight:600;
+  cursor:pointer;transition:all .2s;white-space:nowrap
+}
+.tab-btn.active{background:linear-gradient(135deg,var(--p400),var(--p500));color:var(--w);border-color:transparent}
+.content{padding:10px 10px calc(60px + var(--safe));max-width:600px;margin:0 auto}
+.tab-content{display:none;animation:fadeIn .25s}
+.tab-content.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--w);border-radius:var(--r);padding:12px;margin-bottom:8px;box-shadow:var(--shadow);border:1px solid var(--p100)}
+.section-title{font-size:13px;font-weight:700;color:var(--p600);margin:12px 0 7px;display:flex;align-items:center;gap:4px}
+.section-title:first-child{margin-top:0}
+.stats-row{display:flex;gap:4px;margin:5px 0;overflow-x:auto}
+.stat-card{flex:1;min-width:55px;padding:7px;background:var(--p50);border-radius:var(--r);text-align:center;border:1px solid var(--p100)}
+.stat-card .n{font-size:16px;font-weight:700;color:var(--p500)}
+.stat-card .l{font-size:8px;color:var(--g500)}
+.btn{padding:8px 16px;border-radius:15px;border:none;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-p{background:linear-gradient(135deg,var(--p400),var(--p500));color:var(--w)}
+.btn-p:active{transform:scale(.96)}
+.btn-o{background:var(--w);color:var(--p500);border:2px solid var(--p300)}
+.btn-sm{padding:4px 9px;font-size:9px}
+.btn-block{width:100%}
+.toast{
+  position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+  background:var(--g900);color:var(--w);padding:6px 16px;border-radius:16px;
+  font-size:10px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none
+}
+.toast.show{opacity:1}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:200;align-items:center;justify-content:center;padding:14px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--w);border-radius:18px;padding:16px;width:100%;max-width:440px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,0.12)}
+.modal h3{color:var(--p600);margin-bottom:8px;font-size:14px}
+.modal-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:var(--g500)}
+
+/* ====== HOT ====== */
+.hot-item{padding:11px;background:var(--p50);border-radius:var(--r);margin-bottom:7px;border-left:4px solid var(--p400)}
+.hot-item.pinned{border-left:4px solid #FFB347;background:#FFF8F0}
+.hot-tag{display:inline-block;padding:1px 7px;border-radius:9px;font-size:9px;font-weight:600;margin-right:3px}
+.hot-tag.news{background:#FFE0E0;color:#E8557A}
+.hot-tag.trend{background:#FFE8D6;color:#E8734A}
+.hot-tag.competitor{background:#E0E8FF;color:#4A6FE8}
+.hot-tag.idea{background:#E0FFE8;color:#2E8B57}
+.hot-title{font-size:12px;font-weight:600;color:var(--g900);margin:3px 0 2px}
+.hot-meta{font-size:9px;color:var(--g500)}
+.hot-desc{font-size:10px;color:var(--g700);margin:2px 0;line-height:1.4}
+.hot-actions{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.hot-btn{padding:4px 9px;border-radius:12px;border:none;font-size:9px;font-weight:600;cursor:pointer}
+.hot-btn.chat{background:var(--p500);color:var(--w)}
+.hot-btn.pin{background:#FFB347;color:var(--w)}
+.hot-btn.unpin{background:var(--g300);color:var(--g700)}
+.hot-chat-area{margin-top:5px;display:none}
+.hot-chat-area.open{display:block}
+.hot-chat-msgs{max-height:160px;overflow-y:auto;padding:5px;background:var(--w);border-radius:7px;margin-bottom:5px;font-size:10px;line-height:1.4}
+.hot-chat-msgs .um{color:var(--p600);margin:2px 0;text-align:right}
+.hot-chat-msgs .am{color:var(--g900);margin:2px 0;padding:5px;background:var(--p50);border-radius:7px}
+.hot-chat-row{display:flex;gap:3px}
+.hot-chat-row input{flex:1;padding:5px 8px;border:2px solid var(--p200);border-radius:12px;font-size:10px}
+.hot-chat-row button{padding:5px 10px;background:var(--p500);color:var(--w);border:none;border-radius:12px;font-size:10px;font-weight:600;cursor:pointer}
+.weekly-report{background:linear-gradient(135deg,#FFF8F0,var(--p50));border:2px dashed var(--p300);padding:12px;border-radius:var(--r);margin:8px 0}
+.weekly-report h4{color:var(--p600);font-size:12px;margin-bottom:5px}
+
+/* ====== FOOD ====== */
+.food-log{display:flex;gap:4px;margin-bottom:7px}
+.food-meal{flex:1;padding:7px 3px;background:var(--p50);border-radius:var(--r);text-align:center;cursor:pointer;border:2px solid transparent}
+.food-meal:hover{border-color:var(--p300)}
+.food-meal .mi{font-size:20px;display:block}
+.food-meal .mn{font-size:9px;color:var(--g700);margin-top:1px}
+.food-meal .mk{font-size:8px;color:var(--p500);font-weight:600}
+.nutri-row{display:flex;align-items:center;margin:3px 0;gap:4px}
+.nutri-label{font-size:9px;width:28px;color:var(--g700)}
+.nutri-track{flex:1;height:5px;background:var(--g200);border-radius:3px;overflow:hidden}
+.nutri-fill{height:100%;border-radius:3px;transition:width .5s}
+.nutri-val{font-size:8px;color:var(--g500);width:34px;text-align:right}
+.menu-card{padding:9px;background:var(--p50);border-radius:var(--r);margin:5px 0;border:1px dashed var(--p300);cursor:pointer}
+.menu-card h4{font-size:11px;color:var(--p600);margin-bottom:3px}
+.menu-card p{font-size:9px;color:var(--g700);line-height:1.4}
+.menu-rating{display:flex;gap:3px;margin-top:3px}
+.menu-rating span{font-size:14px;cursor:pointer;opacity:.3}
+.menu-rating span.active,.menu-rating span:hover{opacity:1}
+.recipe-steps{font-size:11px;line-height:1.8;color:var(--g900);padding:8px 0}
+.recipe-steps h5{color:var(--p600);margin:8px 0 4px}
+.recipe-steps li{margin:4px 0 4px 16px}
+
+/* ====== EXERCISE ====== */
+.ex-day{background:var(--w);border-radius:var(--r);padding:9px;margin:5px 0;border:1px solid var(--p200)}
+.ex-day.today{border:2px solid var(--p400);background:var(--p50)}
+.ex-day.rest{opacity:.5}
+.ex-day .dt{font-size:12px;font-weight:700;color:var(--p600);margin-bottom:3px}
+.ex-item{display:flex;align-items:center;gap:5px;padding:4px 0;border-bottom:1px dashed var(--p100);font-size:10px}
+.ex-item:last-child{border-bottom:none}
+.ex-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--p300);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.ex-check.done{background:var(--p400);border-color:var(--p400);color:var(--w)}
+.ex-link{font-size:8px;color:var(--p500);text-decoration:underline;cursor:pointer;margin-left:auto}
+
+/* ====== FINANCE ====== */
+.fin-summary{display:flex;gap:7px;margin-bottom:8px}
+.fin-box{flex:1;padding:8px;background:var(--p50);border-radius:var(--r);text-align:center}
+.fin-box .amt{font-size:14px;font-weight:700;color:var(--p600)}
+.fin-box .lbl{font-size:8px;color:var(--g500);margin-top:1px}
+.quick-records{display:flex;gap:3px;flex-wrap:wrap;margin:5px 0}
+.quick-tag{padding:4px 8px;background:var(--p100);border-radius:11px;font-size:9px;cursor:pointer;color:var(--p600)}
+.quick-tag:active{background:var(--p300)}
+.voice-btn{display:inline-flex;align-items:center;gap:2px;padding:5px 10px;background:linear-gradient(135deg,#FFB347,#FF8C00);color:var(--w);border:none;border-radius:13px;font-size:9px;font-weight:600;cursor:pointer}
+.voice-btn.recording{animation:pulse .8s infinite;background:#E8557A}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.add-record{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.add-record input,.add-record select{padding:6px 7px;border:2px solid var(--p200);border-radius:var(--r);font-size:10px;background:var(--w)}
+.add-record input{flex:1;min-width:45px}
+.add-record select{width:55px}
+.add-record button{padding:6px 10px;background:var(--p500);color:var(--w);border:none;border-radius:var(--r);font-weight:600;cursor:pointer;font-size:10px}
+.record-list{max-height:140px;overflow-y:auto}
+.record-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--g100);font-size:10px}
+.record-row .del{color:var(--p400);cursor:pointer;font-size:14px}
+.budget-bar{height:5px;background:var(--g200);border-radius:3px;overflow:hidden;margin:5px 0}
+.budget-fill{height:100%;background:var(--p400);border-radius:3px}
+.budget-fill.warn{background:#E8557A}
+
+/* ====== READING ====== */
+.reading-subtabs{display:flex;gap:4px;margin:8px 0;overflow-x:auto}
+.rstab{padding:5px 12px;border-radius:13px;border:1px solid var(--p200);background:var(--w);color:var(--p500);font-size:10px;cursor:pointer;white-space:nowrap;font-weight:600}
+.rstab.active{background:var(--p500);color:var(--w);border-color:transparent}
+.book-card{display:flex;gap:7px;padding:9px;background:var(--p50);border-radius:var(--r);margin:5px 0;cursor:pointer;border:1px solid var(--p100)}
+.book-cover{width:40px;height:56px;background:linear-gradient(135deg,var(--p300),var(--p500));border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--w);flex-shrink:0}
+.book-info{flex:1}
+.book-info h4{font-size:11px;color:var(--g900)}
+.book-info .au{font-size:8px;color:var(--g500);margin:1px 0}
+.book-info .dc{font-size:8px;color:var(--g700);line-height:1.3}
+.book-progress{height:4px;background:var(--g200);border-radius:2px;margin-top:4px;overflow:hidden}
+.book-progress-fill{height:100%;background:var(--p400);border-radius:2px}
+.book-progress-label{font-size:8px;color:var(--g500);margin-top:2px}
+.shelf-card{display:flex;gap:7px;padding:9px;background:var(--w);border-radius:var(--r);margin:5px 0;cursor:pointer;border:1px solid var(--p200)}
+.shelf-card .sc{width:36px;height:50px;background:linear-gradient(135deg,var(--p200),var(--p400));border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--w);flex-shrink:0}
+.search-box{display:flex;gap:4px;margin:6px 0}
+.search-box input{flex:1;padding:7px 10px;border:2px solid var(--p200);border-radius:15px;font-size:11px}
+.search-box button{padding:7px 14px;background:var(--p500);color:var(--w);border:none;border-radius:15px;font-size:11px;font-weight:600;cursor:pointer}
+.search-results{max-height:250px;overflow-y:auto;margin:6px 0}
+.search-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid var(--g100);font-size:11px}
+.search-item .add-btn{padding:3px 10px;border-radius:10px;border:1px solid var(--p300);background:var(--w);color:var(--p500);font-size:9px;cursor:pointer}
+
+.reader-content{font-size:13px;line-height:2;color:var(--g900);padding:6px 0;max-height:50vh;overflow-y:auto}
+.reader-content h4{color:var(--p600);margin:12px 0 6px;font-size:14px}
+.reader-content p{margin:6px 0;text-indent:2em;cursor:pointer;position:relative;transition:background .2s}
+.reader-content p:hover{background:var(--p50)}
+.reader-content p.highlighted{background:#FFF3B0;border-left:3px solid #FFB347;padding-left:8px;border-radius:0 4px 4px 0}
+.reader-note-btn{display:none;position:absolute;right:0;top:-20px;padding:2px 6px;background:var(--p400);color:var(--w);border:none;border-radius:8px;font-size:9px;cursor:pointer}
+.chapter-nav{display:flex;gap:4px;margin:6px 0;flex-wrap:wrap}
+.chapter-nav button{padding:3px 8px;border-radius:8px;border:1px solid var(--p200);background:var(--w);color:var(--p500);font-size:9px;cursor:pointer}
+.chapter-nav button.active{background:var(--p400);color:var(--w);border-color:transparent}
+.highlights-panel{margin-top:8px}
+.highlight-item{padding:6px;background:#FFF8E1;border-left:3px solid #FFB347;border-radius:4px;margin:4px 0;font-size:10px;line-height:1.4}
+.highlight-item .hnote{font-size:9px;color:var(--g500);margin-top:2px;font-style:italic}
+.quote-card{padding:9px;background:linear-gradient(135deg,var(--p50),var(--w));border-left:3px solid var(--p400);border-radius:var(--r);margin:5px 0;font-size:10px;line-height:1.5;color:var(--g900);font-style:italic}
+.quote-src{text-align:right;font-size:8px;color:var(--g500);margin-top:2px;font-style:normal}
+
+/* ====== DIARY ====== */
+.diary-guide{padding:10px;background:linear-gradient(135deg,var(--p50),var(--w));border-radius:var(--r);margin-bottom:7px}
+.diary-guide .step{display:none;padding:5px 0;text-align:center}
+.diary-guide .step.active{display:block}
+.diary-guide .sq{font-size:12px;color:var(--p600);font-weight:600}
+.diary-guide .si{width:100%;padding:7px;border:2px solid var(--p200);border-radius:var(--r);font-size:11px;margin:4px 0;font-family:inherit}
+.diary-guide .sb{padding:5px 14px;background:var(--p400);color:var(--w);border:none;border-radius:13px;font-size:10px;font-weight:600;cursor:pointer;margin:2px}
+.diary-photo-btn{display:inline-flex;align-items:center;gap:2px;padding:6px 10px;background:var(--p100);border:none;border-radius:14px;color:var(--p600);font-size:10px;font-weight:600;cursor:pointer;margin:4px 0}
+.diary-entry{padding:9px;background:var(--w);border-radius:var(--r);margin:5px 0;border:1px solid var(--p100)}
+.diary-entry .dt{font-size:9px;color:var(--g500)}
+.diary-entry .tx{font-size:10px;color:var(--g900);margin:2px 0;line-height:1.5}
+.diary-entry .md{font-size:14px}
+
+/* ====== ENGLISH ====== */
+.eng-streak{text-align:center;margin-bottom:7px}
+.eng-streak .num{font-size:28px;font-weight:800;color:var(--p500)}
+.eng-streak .lbl{font-size:9px;color:var(--g500)}
+.word-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin:5px 0}
+.word-card{padding:7px;background:var(--w);border-radius:var(--r);border:1px solid var(--p200);text-align:center}
+.word-card .w{font-size:11px;font-weight:700;color:var(--p600)}
+.word-card .p{font-size:8px;color:var(--g500)}
+.word-card .m{font-size:9px;color:var(--g700);margin-top:1px}
+.word-card .kb{margin-top:3px;padding:2px 7px;border-radius:7px;border:1px solid var(--p300);background:var(--w);color:var(--p500);font-size:8px;cursor:pointer}
+.word-card.mastered{opacity:.35;background:var(--p50)}
+.scenario-card{padding:10px;background:var(--p50);border-radius:var(--r);margin:7px 0;border:1px dashed var(--p300)}
+.scenario-card h4{font-size:11px;color:var(--p600);margin-bottom:3px}
+.scenario-card pre{font-size:9px;color:var(--g700);line-height:1.5;white-space:pre-wrap;font-family:inherit}
+
+@media(max-width:600px){.tab-nav{top:68px}.header{padding:10px 10px 7px}.header-title{font-size:15px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-kitty">🎀</span>
+  <div class="header-title">🌸 小粉工作台</div>
+  <div class="header-date" id="hd"></div>
+</div>
+
+<div class="tab-nav" id="tn">
+  <button class="tab-btn active" data-tab="hot">💊热点</button>
+  <button class="tab-btn" data-tab="food">🍱饮食</button>
+  <button class="tab-btn" data-tab="exercise">🏃运动</button>
+  <button class="tab-btn" data-tab="finance">💰记账</button>
+  <button class="tab-btn" data-tab="reading">📖阅读</button>
+  <button class="tab-btn" data-tab="diary">🌸日记</button>
+  <button class="tab-btn" data-tab="english">🇬🇧英语</button>
+</div>
+
+<div class="content" id="ct">
+<!-- 热点 -->
+<div class="tab-content active" id="tab-hot">
+  <button class="btn btn-sm btn-o" onclick="refreshHot()" style="margin-bottom:7px">🔄 刷新</button>
+  <div class="stats-row" id="hotStats"></div>
+  <div class="section-title">📌 我的收藏</div><div id="pinnedList"></div>
+  <div class="section-title">📊 上周选题周报</div><div id="weeklyReport"></div>
+  <div class="section-title">🔥 最新热点</div><div id="hotList"></div>
+</div>
+
+<!-- 饮食 -->
+<div class="tab-content" id="tab-food">
+  <div class="section-title">📸 拍照识别</div>
+  <div class="card" style="text-align:center"><input type="file" accept="image/*;capture=camera" id="fpInput" style="display:none" onchange="handleFoodPhoto(event)"><button class="btn btn-sm btn-o" onclick="document.getElementById('fpInput').click()">📸 拍食物自动识别</button><div id="fpResult" style="margin-top:7px"></div></div>
+  <div class="section-title">📅 今日饮食</div><div class="food-log" id="mealLog"></div>
+  <div class="section-title">📊 营养摄入</div>
+  <div class="card"><div id="nutriBars"></div><div style="text-align:center;margin-top:4px"><span style="font-size:10px;color:var(--g700)">今日摄入：</span><span style="font-size:15px;font-weight:700;color:var(--p600)" id="tk">0</span><span style="font-size:10px;color:var(--g500)">kcal</span></div></div>
+  <button class="btn btn-sm btn-o" onclick="openFoodModal()" style="margin:4px 0">+ 手动添加</button>
+  <div class="section-title">🍳 本周推荐菜单 <span style="font-size:9px;color:var(--g500)">（点击看做法）</span></div><div id="menuRec"></div>
+</div>
+
+<!-- 运动 -->
+<div class="tab-content" id="tab-exercise">
+  <div class="section-title">📊 本周打卡</div><div class="stats-row" id="exStats"></div>
+  <div class="section-title">📋 本周计划（3-4次/周）</div><div id="exPlan"></div>
+</div>
+
+<!-- 记账 -->
+<div class="tab-content" id="tab-finance">
+  <div class="section-title">⚡ 快速记账</div>
+  <div class="quick-records" id="qt"></div>
+  <div style="display:flex;gap:5px;align-items:center;margin:5px 0"><button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤语音</button><span id="voiceStatus" style="font-size:9px;color:var(--g500)"></span></div>
+  <div class="add-record"><input type="number" id="fa" placeholder="金额"><select id="ft"><option value="expense">支出</option><option value="income">收入</option></select><select id="fc"><option value="餐饮">🍜</option><option value="交通">🚗</option><option value="购物">🛍</option><option value="娱乐">🎬</option><option value="住房">🏠</option><option value="其他">📦</option></select><button onclick="addFin()">记</button></div>
+  <div class="section-title">💰 本月概览</div>
+  <div class="fin-summary"><div class="fin-box expense"><div class="amt" id="te">¥0</div><div class="lbl">支出</div></div><div class="fin-box income"><div class="amt" id="ti">¥0</div><div class="lbl">收入</div></div><div class="fin-box"><div class="amt" id="tb">¥0</div><div class="lbl">结余</div></div></div>
+  <div class="section-title">🎯 预算</div>
+  <div class="card"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span>预算：<b id="bd">¥3000</b></span><span>已用：<b id="bu">¥0</b></span><span>剩余：<b id="br" style="color:#2E8B57">¥3000</b></span></div><div class="budget-bar"><div class="budget-fill" id="bb" style="width:0%"></div></div><button class="btn btn-sm btn-o" onclick="setBudget()" style="margin-top:4px">修改</button></div>
+  <div class="section-title">📊 支出分布</div><canvas id="pieChart" width="240" height="240" style="display:block;margin:0 auto"></canvas>
+  <div class="section-title">📋 记录</div><div class="record-list" id="fl"></div>
+</div>
+
+<!-- 阅读（重构：书架系统） -->
+<div class="tab-content" id="tab-reading">
+  <div class="reading-subtabs" id="rst">
+    <button class="rstab active" data-rs="recommend">📚 推荐</button>
+    <button class="rstab" data-rs="shelf">📖 我的书架</button>
+    <button class="rstab" data-rs="search">🔍 搜书</button>
+  </div>
+  <div id="rs-recommend">
+    <button class="btn btn-sm btn-o" onclick="refreshBooks()" style="margin-bottom:6px">🔄 换一批推荐</button>
+    <div id="bookList"></div>
+  </div>
+  <div id="rs-shelf" style="display:none">
+    <div class="section-title">📖 在读</div><div id="shelfReading"></div>
+    <div class="section-title">✅ 已读完</div><div id="shelfDone"></div>
+  </div>
+  <div id="rs-search" style="display:none">
+    <div class="search-box"><input id="sq" placeholder="搜书名、作者..."><button onclick="searchBooks()">搜索</button></div>
+    <div class="search-results" id="sr"></div>
+  </div>
+  <div class="section-title">💬 今日金句</div><div id="quoteCard"></div>
+  <div class="section-title">✍️ 读书笔记</div>
+  <textarea id="rn" style="width:100%;min-height:60px;padding:7px;border:2px solid var(--p200);border-radius:var(--r);font-size:11px;font-family:inherit;line-height:1.5;resize:vertical" placeholder="今天读了什么？有什么想法？"></textarea>
+  <button class="btn btn-p btn-sm" onclick="saveRN()" style="margin-top:4px">保存笔记</button>
+  <div id="rnotes" style="margin-top:5px"></div>
+</div>
+
+<!-- 日记 -->
+<div class="tab-content" id="tab-diary">
+  <div class="section-title">💭 今日引导</div><div class="diary-guide" id="dg"></div>
+  <input type="file" accept="image/*;capture=camera" id="dpInput" style="display:none" onchange="handleDP(event)">
+  <button class="diary-photo-btn" onclick="document.getElementById('dpInput').click()">📸 拍照</button><div id="dpPrev" style="margin:3px 0"></div>
+  <textarea id="dtxt" style="width:100%;min-height:70px;padding:9px;border:2px solid var(--p200);border-radius:var(--r);font-size:11px;font-family:inherit;line-height:1.5;resize:vertical" placeholder="或者自己随便写写..."></textarea>
+  <div style="margin:4px 0;display:flex;gap:3px;align-items:center"><span style="font-size:10px;color:var(--g700)">心情：</span><span class="ms" data-mood="😊" style="font-size:18px;cursor:pointer;opacity:.4">😊</span><span class="ms" data-mood="😢" style="font-size:18px;cursor:pointer;opacity:.4">😢</span><span class="ms" data-mood="😤" style="font-size:18px;cursor:pointer;opacity:.4">😤</span><span class="ms" data-mood="😌" style="font-size:18px;cursor:pointer;opacity:.4">😌</span><span class="ms" data-mood="🥰" style="font-size:18px;cursor:pointer;opacity:.4">🥰</span></div>
+  <button class="btn btn-p" onclick="saveD()">💾 保存日记</button>
+  <div class="section-title">📔 日记本</div><div id="dl"></div>
+</div>
+
+<!-- 英语 -->
+<div class="tab-content" id="tab-english">
+  <div class="section-title">📊 统计</div>
+  <div class="eng-streak"><div class="num" id="es">0</div><div class="lbl">🔥连续打卡</div></div>
+  <div class="stats-row" id="estats"></div>
+  <div class="section-title">📝 今日单词（15个）</div><div class="word-grid" id="wg"></div>
+  <div class="section-title" id="stitle">💼 职场英语</div><div class="scenario-card" id="sc"></div>
+  <button class="btn btn-p btn-block" onclick="markEng()" style="margin:7px 0">✅ 完成学习</button>
+</div>
+</div>
+
+<!-- 阅读器弹窗 -->
+<div class="modal-overlay" id="readerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeReader()">✕</button>
+    <h3 id="rtitle"></h3>
+    <div class="chapter-nav" id="cnav"></div>
+    <div class="reader-content" id="rct"></div>
+    <div class="highlights-panel" id="hp"></div>
+    <div style="margin-top:8px;display:flex;gap:6px">
+      <button class="btn btn-sm btn-p" onclick="markReadDone()">✅ 标记已读</button>
+      <button class="btn btn-sm btn-o" onclick="updateProgress()">📊 更新进度</button>
+    </div>
+  </div>
+</div>
+
+<!-- 做法弹窗 -->
+<div class="modal-overlay" id="recipeModal">
+  <div class="modal"><button class="modal-close" onclick="document.getElementById('recipeModal').classList.remove('show')">✕</button><h3 id="rmt"></h3><div class="recipe-steps" id="rmc"></div></div>
+</div>
+
+<!-- 划金句笔记弹窗 -->
+<div class="modal-overlay" id="highlightModal">
+  <div class="modal"><button class="modal-close" onclick="document.getElementById('highlightModal').classList.remove('show')">✕</button><h3>💬 金句笔记</h3><p id="hquote" style="font-size:12px;color:var(--p600);font-style:italic;padding:8px;background:var(--p50);border-radius:8px"></p><textarea id="hnote" style="width:100%;min-height:60px;padding:8px;border:2px solid var(--p200);border-radius:var(--r);font-size:11px;font-family:inherit;margin:6px 0" placeholder="记录你的想法..."></textarea><button class="btn btn-p btn-sm" onclick="saveHighlight()">保存金句</button></div>
+</div>
+
+<!-- 食物弹窗 -->
+<div class="modal-overlay" id="foodModal"><div class="modal"><button class="modal-close" onclick="closeFoodModal()">✕</button><h3>🍱 添加饮食</h3><div style="margin:4px 0"><select id="fmt" style="padding:6px;border-radius:7px;border:2px solid var(--p200);width:100%"><option value="breakfast">🌅早餐</option><option value="lunch">☀️午餐</option><option value="dinner">🌙晚餐</option><option value="snack">🍪加餐</option></select></div><div style="margin:4px 0"><input id="fnm" placeholder="食物名称" style="padding:6px;border-radius:7px;border:2px solid var(--p200);width:100%"></div><div style="margin:4px 0"><input id="fkl" type="number" placeholder="热量(kcal)" style="padding:6px;border-radius:7px;border:2px solid var(--p200);width:100%"></div><button class="btn btn-p" onclick="addFood()" style="width:100%;margin-top:4px">确认</button></div></div>
+
+<!-- 预算弹窗 -->
+<div class="modal-overlay" id="budgetModal"><div class="modal"><button class="modal-close" onclick="closeBudget()">✕</button><h3>🎯 月度预算</h3><input id="bgi" type="number" placeholder="3000" style="padding:7px;border-radius:7px;border:2px solid var(--p200);width:100%;font-size:12px"><button class="btn btn-p btn-block" onclick="saveBudget()" style="margin-top:7px">保存</button></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ STORAGE ============
+const K='xf4_';
+function ld(k,d={}){try{return JSON.parse(localStorage.getItem(K+k))||d}catch(e){return d}}
+function sv(k,d){localStorage.setItem(K+k,JSON.stringify(d))}
+let S={
+  food:ld('food',{records:[],menuRatings:{}}),
+  exercise:ld('exercise',{wd:{},streak:0,wk:''}),
+  finance:ld('finance',{records:[],budget:3000}),
+  reading:ld('reading',{notes:[],shelf:{},highlights:{},currentBook:null,currentCh:0,bookRecIdx:0}),
+  diary:ld('diary',{entries:[]}),
+  english:ld('english',{streak:0,wl:0,ld:'',md:{}}),
+  hot:ld('hot',{pinned:[],chats:{}}),
+  dm:'😊',dp:null,ds:0,da:[],rsTab:'recommend',hlText:'',hlBook:''
+};
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('hd').textContent=(()=>{const n=new Date();return `${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日 星期${['日','一','二','三','四','五','六'][n.getDay()]} 🌸`})();
+  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');
+    renderTab(b.dataset.tab);
+  }));
+  document.querySelectorAll('.ms').forEach(el=>el.addEventListener('click',function(){
+    document.querySelectorAll('.ms').forEach(e=>e.style.opacity='.4');this.style.opacity='1';S.dm=this.dataset.mood;
+  }));
+  document.querySelectorAll('.rstab').forEach(b=>b.addEventListener('click',function(){
+    document.querySelectorAll('.rstab').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');S.rsTab=this.dataset.rs;
+    ['recommend','shelf','search'].forEach(t=>document.getElementById('rs-'+t).style.display=t===S.rsTab?'':'none');
+    if(S.rsTab==='shelf')rShelf();if(S.rsTab==='search')document.getElementById('sq').focus();
+  }));
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  renderAll();
+});
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
+function td(){return new Date().toISOString().slice(0,10)}
+function renderTab(t){const f={hot:rHot,food:rFood,exercise:rEx,finance:rFin,reading:rRead,diary:rD,english:rEng};if(f[t])f[t]()}
+function renderAll(){['hot','food','exercise','finance','reading','diary','english'].forEach(t=>renderTab(t))}
+
+// ============ HOT ============
+const HOT=[
+  {tag:'news',tt:'新闻',title:'35岁+女性健康：更年期提前的5个信号',desc:'多篇医学报道聚焦围绝经期，与「中女健康」选题高度相关。可科普+真实案例切入。',src:'丁香医生',tm:'2小时前'},
+  {tag:'trend',tt:'小红书',title:'「暑假回老家」话题爆火，怀旧+亲子共鸣',desc:'#暑假农村老家#阅读量破2亿。年糕妈妈已发文，数据优异。可做系列延伸。',src:'小红书',tm:'3小时前'},
+  {tag:'competitor',tt:'竞品',title:'年糕妈妈近3天爆款分析',desc:'主号「中女情感+健康警示+育儿故事」三线并进。离婚话题、明星健康八卦类表现突出。',src:'年糕妈妈',tm:'今天'},
+  {tag:'idea',tt:'灵感',title:'「更年期妈妈 vs 青春期娃」双期碰撞',desc:'重点方向。可做系列：情绪管理、沟通技巧、身体变化科普。差异化强。',src:'选题建议',tm:'新'},
+  {tag:'trend',tt:'抖音',title:'「35岁小肚子为什么难减」热门',desc:'年糕妈妈已发相关文章。可做视频延伸或「30+体态管理」系列。',src:'抖音',tm:'5小时前'},
+  {tag:'competitor',tt:'同类',title:'丁香妈妈「暑假儿童安全」系列 8w+',desc:'关注差异化——年糕妈妈优势在「妈妈视角+家庭故事」。',src:'丁香妈妈',tm:'1天前'},
+  {tag:'news',tt:'新闻',title:'知名果汁品牌被曝"造假"已售10万瓶',desc:'年糕妈妈已跟进。消费安全选题可常态化。',src:'央视财经',tm:'2天前'},
+  {tag:'idea',tt:'灵感',title:'「暑假三胎家庭的崩溃日常」UGC方向',desc:'结合三胎文章思路，发起征集引导UGC互动。',src:'选题建议',tm:'新'}
+];
+function refreshHot(){toast('🔄 刷新中...');setTimeout(()=>{HOT.forEach(t=>{if(Math.random()>.7)t.tm='刚刚更新'});rHot();toast('✅ 已更新')},500)}
+function togglePin(i){const p=S.hot.pinned||[];const idx=p.indexOf(i);if(idx>-1)p.splice(idx,1);else p.push(i);S.hot.pinned=p;sv('hot',S.hot);rHot();toast(idx>-1?'已取消收藏':'⭐ 已收藏')}
+function rHot(){
+  const pinned=(S.hot.pinned||[]).map(i=>HOT[i]).filter(Boolean);
+  document.getElementById('hotStats').innerHTML=`<div class="stat-card"><div class="n">${HOT.filter(t=>t.tag==='news').length}</div><div class="l">📰新闻</div></div><div class="stat-card"><div class="n">${HOT.filter(t=>t.tag==='trend').length}</div><div class="l">📈趋势</div></div><div class="stat-card"><div class="n">${HOT.filter(t=>t.tag==='competitor').length}</div><div class="l">👀竞品</div></div><div class="stat-card"><div class="n">${pinned.length}</div><div class="l">⭐收藏</div></div>`;
+  document.getElementById('pinnedList').innerHTML=pinned.length?pinned.map((item,i)=>{const oi=HOT.indexOf(item);return `<div class="hot-item pinned"><span class="hot-tag ${item.tag}">${item.tt}</span>⭐<div class="hot-title">${item.title}</div><div class="hot-desc">${item.desc}</div><div class="hot-actions"><button class="hot-btn chat" onclick="toggleHC(${oi})">💬聊选题</button><button class="hot-btn unpin" onclick="togglePin(${oi})">取消</button></div><div class="hot-chat-area" id="hc${oi}"><div class="hot-chat-msgs" id="hm${oi}"><div class="am">🤖 你对这条收藏的选题有什么想法？</div></div><div class="hot-chat-row"><input id="hi${oi}" placeholder="说说想法..."><button onclick="sendHC(${oi})">发送</button></div></div></div>`}).join(''):'<div style="text-align:center;padding:12px;color:var(--g500);font-size:10px">还没有收藏的热点，点击下方 ⭐ 收藏吧~</div>';
+  const dow=new Date().getDay();
+  document.getElementById('weeklyReport').innerHTML=dow===1?`<h4>📊 上周选题回顾 & 本周方向</h4><p style="font-size:10px;color:var(--g700);line-height:1.5"><b>📌 上周值得关注：</b><br>1.「更年期+青春期」双期话题<br>2.「暑假回老家」怀旧情感<br>3.「35岁小肚子」体态管理<br><br><b>🎯 本周方向：</b><br>• 发起UGC征集<br>• 准备系列大纲<br>• 关注消费安全热点<br><br><b>💡 节奏：</b>周一干货|周三情感|周五轻松|周末互动</p>`:`<div style="text-align:center;padding:8px;color:var(--g500);font-size:10px">📅 每周一自动汇总，记得周一来看~</div>`;
+  document.getElementById('hotList').innerHTML=HOT.map((item,i)=>{const isP=(S.hot.pinned||[]).includes(i);return `<div class="hot-item${isP?' pinned':''}"><span class="hot-tag ${item.tag}">${item.tt}</span><span style="font-size:8px;color:var(--g500)">${item.tm}</span>${isP?' ⭐':''}<div class="hot-title">${item.title}</div><div class="hot-desc">${item.desc}</div><div class="hot-meta">来源：${item.src}</div><div class="hot-actions"><button class="hot-btn chat" onclick="toggleHC(${i})">💬聊选题</button><button class="hot-btn ${isP?'unpin':'pin'}" onclick="togglePin(${i})">${isP?'取消':'⭐收藏'}</button></div><div class="hot-chat-area" id="hc${i}"><div class="hot-chat-msgs" id="hm${i}"><div class="am">🤖 你对这条热点有什么想法？</div></div><div class="hot-chat-row"><input id="hi${i}" placeholder="说说想法..."><button onclick="sendHC(${i})">发送</button></div></div></div>`}).join('');
+}
+function toggleHC(i){const a=document.getElementById('hc'+i);a.classList.toggle('open');if(a.classList.contains('open'))document.getElementById('hi'+i).focus()}
+function sendHC(i){const inp=document.getElementById('hi'+i),msg=inp.value.trim();if(!msg)return;const ms=document.getElementById('hm'+i);ms.innerHTML+=`<div class="um">💁‍♀️ ${msg}</div>`;inp.value='';const reps=[`从「${HOT[i].title}」切入很好。<br>📌标题1：数据+悬念<br>📌标题2：故事+共鸣<br>📌互动：结尾投票引导UGC`,`结合年糕妈妈调性：<br>🎯钩子："原来我不是一个人"<br>🎯结构：故事→数据→方案→互动<br>🎯差异化：闺蜜分享+干货路线`,`补充角度：<br>💡试试"热点引入→科普→自查"公式<br>💡工作日发干货，周末发情感`];setTimeout(()=>{ms.innerHTML+=`<div class="am">🤖 ${reps[Math.floor(Math.random()*reps.length)]}</div>`;ms.scrollTop=ms.scrollHeight},400+Math.random()*500)}
+
+// ============ FOOD ============
+const FDB={
+  '米饭':{k:116,p:2.6,f:0.3,c:25.9,fb:0.3},'馒头':{k:223,p:7,f:1.1,c:44,fb:1.3},'面条':{k:110,p:3.5,f:0.3,c:22,fb:0.4},'鸡蛋':{k:144,p:13.3,f:8.8,c:2.8,fb:0},'牛奶':{k:54,p:3,f:3.2,c:3.4,fb:0},'豆浆':{k:16,p:1.8,f:0.7,c:1.1,fb:0.5},'鸡胸肉':{k:133,p:19.4,f:5,c:2.5,fb:0},'牛肉':{k:125,p:19.9,f:4.2,c:2,fb:0},'鱼肉':{k:123,p:18,f:5,c:1.5,fb:0},'虾':{k:93,p:18.6,f:0.8,c:2.8,fb:0},'番茄':{k:20,p:0.9,f:0.2,c:4,fb:0.5},'黄瓜':{k:16,p:0.8,f:0.2,c:2.9,fb:0.5},'西兰花':{k:36,p:4.1,f:0.6,c:4.3,fb:1.6},'生菜':{k:16,p:1.3,f:0.3,c:2,fb:0.7},'菠菜':{k:28,p:2.6,f:0.3,c:4.5,fb:1.7},'土豆':{k:81,p:2,f:0.2,c:17.8,fb:0.7},'苹果':{k:53,p:0.2,f:0.2,c:13.5,fb:1.2},'香蕉':{k:93,p:1.4,f:0.2,c:22,fb:1.2},'橙子':{k:48,p:0.8,f:0.2,c:11.1,fb:0.6},'酸奶':{k:72,p:2.5,f:2.7,c:9.3,fb:0},'咖啡':{k:2,p:0.1,f:0,c:0.3,fb:0},'番茄炒蛋':{k:85,p:5,f:4,c:6,fb:0.8},'清蒸鱼':{k:110,p:17,f:4,c:1,fb:0},'炒青菜':{k:45,p:2,f:2.5,c:4,fb:1.5},'红烧肉':{k:340,p:10,f:30,c:8,fb:0},'宫保鸡丁':{k:175,p:15,f:10,c:8,fb:0.5},'麻婆豆腐':{k:85,p:6,f:5,c:4,fb:0.5},'饺子':{k:220,p:8,f:7,c:30,fb:1},'沙拉':{k:60,p:3,f:3,c:6,fb:3},'三明治':{k:250,p:10,f:10,c:30,fb:2},'火锅':{k:300,p:20,f:20,c:15,fb:2},'坚果':{k:560,p:20,f:45,c:20,fb:8},'奶茶':{k:65,p:0.5,f:2,c:11,fb:0},'蒜蓉西兰花':{k:42,p:4,f:1,c:5,fb:2},'鸡胸肉炒青椒':{k:95,p:14,f:4,c:3,fb:1},'牛肉炒洋葱':{k:130,p:16,f:5,c:6,fb:1},'杂粮饭':{k:100,p:3,f:1,c:22,fb:2},'清蒸鲈鱼':{k:105,p:18,f:3.5,c:1,fb:0},'虾仁豆腐煲':{k:65,p:8,f:2.5,c:3,fb:0.5},'白灼生菜':{k:20,p:1.5,f:0.5,c:2.5,fb:1},'蒸南瓜':{k:22,p:0.7,f:0.1,c:5.3,fb:0.8},'凉拌黄瓜':{k:20,p:1,f:0.5,c:3,fb:1},'紫菜蛋花汤':{k:30,p:3,f:1,c:2,fb:0.3},'全麦三明治':{k:220,p:9,f:8,c:28,fb:3}
+};
+
+// 菜谱做法库
+const RECIPES={
+  '番茄炒蛋':{steps:'<h5>🥘 番茄炒蛋</h5><ol><li>番茄切块，鸡蛋打散加少许盐</li><li>热锅冷油，倒入蛋液，炒至凝固盛出</li><li>锅中再加少许油，放入番茄翻炒出汁</li><li>加入炒好的鸡蛋，加盐、少许糖调味</li><li>翻炒均匀即可出锅</li></ol><p>💡 关键：番茄要炒出汁才够味，加一点糖可以中和酸味</p>'},
+  '清蒸鲈鱼':{steps:'<h5>🐟 清蒸鲈鱼</h5><ol><li>鲈鱼洗净，两面各划三刀，抹盐和料酒腌制10分钟</li><li>盘中铺姜片和葱段，放上鱼</li><li>水开后上锅蒸8-10分钟（视鱼大小）</li><li>倒掉蒸出的腥水，撒上葱花</li><li>另起锅烧热油，淋在鱼身上，再淋蒸鱼豉油</li></ol><p>💡 关键：蒸的时间不要超过10分钟，鱼眼突出就熟了</p>'},
+  '鸡胸肉炒青椒':{steps:'<h5>🍗 鸡胸肉炒青椒</h5><ol><li>鸡胸肉切丝，加料酒、生抽、淀粉腌制10分钟</li><li>青椒切丝，蒜切片</li><li>热油滑炒鸡丝至变色盛出</li><li>锅中留底油，爆香蒜片，下青椒翻炒</li><li>加入鸡丝，加盐、生抽调味，翻炒均匀</li></ol><p>💡 关键：鸡胸肉加淀粉腌制更嫩，不要炒太久</p>'},
+  '虾仁豆腐煲':{steps:'<h5>🦐 虾仁豆腐煲</h5><ol><li>嫩豆腐切块，虾仁用料酒和盐腌制</li><li>砂锅/锅中放少许油，爆香姜蒜</li><li>放入豆腐轻轻翻炒，加半碗水</li><li>水开后放入虾仁，煮2-3分钟</li><li>加盐、白胡椒粉、葱花调味</li></ol><p>💡 关键：豆腐不要翻动太多，容易碎</p>'},
+  '牛肉炒洋葱':{steps:'<h5>🥩 牛肉炒洋葱</h5><ol><li>牛肉逆纹切片，加生抽、料酒、淀粉腌制15分钟</li><li>洋葱切丝</li><li>热锅多油，大火滑炒牛肉至变色盛出</li><li>锅中炒洋葱至透明</li><li>加入牛肉，加黑胡椒、盐调味，大火翻炒</li></ol><p>💡 关键：牛肉逆纹切才嫩，大火快炒</p>'},
+  '麻婆豆腐':{steps:'<h5>🌶️ 麻婆豆腐</h5><ol><li>嫩豆腐切小块，焯水1分钟捞出</li><li>锅中炒肉末至变色，加豆瓣酱炒出红油</li><li>加适量水，放入豆腐</li><li>小火煮3分钟，加花椒粉、生抽</li><li>水淀粉勾芡，撒葱花出锅</li></ol><p>💡 关键：豆腐先焯水不易碎，豆瓣酱要炒出红油</p>'},
+  '宫保鸡丁':{steps:'<h5>🥜 宫保鸡丁</h5><ol><li>鸡胸肉切丁，加料酒、生抽、淀粉腌制</li><li>调酱汁：生抽+醋+糖+淀粉+水</li><li>小火炒花生米至金黄备用</li><li>热油炒鸡丁至变色，加干辣椒、花椒</li><li>倒入酱汁翻炒，加花生米、葱段</li></ol><p>💡 关键：酱汁比例生抽:醋:糖≈2:1:1</p>'},
+  '沙拉':{steps:'<h5>🥗 基础沙拉</h5><ol><li>生菜/芝麻菜洗净沥干撕碎</li><li>加入小番茄、黄瓜片、玉米粒</li><li>加入煮好的鸡胸肉丝或虾仁</li><li>淋橄榄油+柠檬汁+盐+黑胡椒</li><li>拌匀即可</li></ol><p>💡 关键：蔬菜一定要沥干水分，酱汁吃之前再淋</p>'},
+  '饺子':{steps:'<h5>🥟 煮饺子</h5><ol><li>水烧开，加一小勺盐（防粘）</li><li>饺子下锅，用勺背轻轻推散</li><li>水开后加半碗冷水，重复3次</li><li>饺子全部浮起且鼓胀即可捞出</li><li>蘸料：醋+生抽+蒜末+辣椒油</li></ol><p>💡 关键：加3次冷水是煮饺子的秘诀</p>'},
+  '火锅':{steps:'<h5>🍲 简易小火锅</h5><ol><li>锅中加水+火锅底料（推荐清汤/番茄底料）</li><li>准备食材：肉片、虾、豆腐、蔬菜、菌菇</li><li>调蘸料：芝麻酱+蒜泥+香菜+醋+生抽</li><li>水开后先涮肉，再涮菜</li><li>最后下面条或粉丝收尾</li></ol><p>💡 关键：清汤底料热量更低，蘸料少油</p>'},
+  '蒸南瓜':{steps:'<h5>🎃 蒸南瓜</h5><ol><li>南瓜去皮去籽，切厚片</li><li>水开后上锅蒸15-20分钟</li><li>筷子能轻松插入即熟</li><li>可直接吃，也可撒少许白糖</li></ol><p>💡 关键：选贝贝南瓜口感更粉糯</p>'},
+  '凉拌黄瓜':{steps:'<h5>🥒 凉拌黄瓜</h5><ol><li>黄瓜拍碎（不是切！拍的口感更好）</li><li>加盐腌制5分钟，倒掉出水</li><li>加蒜末、醋、生抽、香油、辣椒油</li><li>拌匀即可</li></ol><p>💡 关键：拍黄瓜比切黄瓜好吃10倍</p>'},
+  '紫菜蛋花汤':{steps:'<h5>🍜 紫菜蛋花汤</h5><ol><li>水烧开，放入撕碎的紫菜</li><li>鸡蛋打散，沿筷子缓慢倒入锅中</li><li>加盐、香油、葱花</li><li>煮1分钟即可</li></ol><p>💡 关键：蛋液要沿筷子慢慢倒，蛋花才漂亮</p>'},
+  '蒜蓉西兰花':{steps:'<h5>🥦 蒜蓉西兰花</h5><ol><li>西兰花掰小朵，焯水1分钟捞出</li><li>蒜切末</li><li>热油爆香蒜末</li><li>放入西兰花翻炒，加盐调味</li></ol><p>💡 关键：焯水时加一点盐和油，西兰花更翠绿</p>'}
+};
+
+function showRecipe(name){
+  const r=RECIPES[name];
+  if(!r){toast('暂无详细做法');return}
+  document.getElementById('rmt').textContent='🍳 '+name;
+  document.getElementById('rmc').innerHTML=r.steps;
+  document.getElementById('recipeModal').classList.add('show');
+}
+
+const MENU_POOL=[
+  {cat:'🥘 家常菜',items:[{n:'番茄炒蛋+米饭',k:200},{n:'清蒸鲈鱼+炒时蔬',k:250},{n:'鸡胸肉炒青椒+杂粮饭',k:240},{n:'虾仁豆腐煲+白灼生菜',k:180},{n:'牛肉炒洋葱+蒸南瓜',k:250},{n:'麻婆豆腐+蒜蓉西兰花',k:200},{n:'宫保鸡丁+凉拌黄瓜',k:260}]},
+  {cat:'🥗 轻食',items:[{n:'沙拉+鸡胸肉',k:200},{n:'全麦三明治+牛奶',k:280},{n:'蒸鱼+水煮西兰花',k:200},{n:'酸奶+坚果+水果',k:250}]},
+  {cat:'🍜 暖锅',items:[{n:'番茄鸡蛋面',k:350},{n:'紫菜蛋花汤+饺子',k:300},{n:'简易小火锅（清汤）',k:350}]}
+];
+function getWeekMenu(){
+  const wn=Math.floor(new Date().getTime()/604800000);
+  const pool=[];MENU_POOL.forEach(cat=>cat.items.forEach(item=>pool.push({...item,cat:cat.cat})));
+  const ratings=S.food.menuRatings||{};
+  const sorted=pool.sort((a,b)=>(ratings[b.n]||3)-(ratings[a.n]||3));
+  const picks=[];for(let i=0;i<7;i++)picks.push(sorted[i]);
+  const used=new Set(picks.map(p=>p.n));
+  for(let i=0;i<sorted.length&&picks.length<9;i++)if(!used.has(sorted[i].n))picks.push(sorted[i]);
+  return picks.slice(0,9);
+}
+function rateMenu(name,rating){S.food.menuRatings=S.food.menuRatings||{};S.food.menuRatings[name]=rating;sv('food',S.food);rFood();toast(`⭐ 评分 ${rating}/5`)}
+function handleFoodPhoto(e){
+  const f=e.target.files[0];if(!f)return;toast('📸 分析中...');
+  setTimeout(()=>{const foods=['米饭','番茄炒蛋','鸡胸肉','炒青菜','清蒸鱼','沙拉','饺子','三明治'];document.getElementById('fpResult').innerHTML=`<p style="font-size:10px;color:var(--g700);margin-bottom:5px">可能是：</p><div style="display:flex;flex-wrap:wrap;gap:3px">${foods.map(f=>`<span class="quick-tag" onclick="confirmPF('${f}')">${f} ~${FDB[f]?.k||'?'}kcal</span>`).join('')}</div>`;toast('✅ 点击确认')},600)}
+function confirmPF(name){const d=FDB[name]||{k:100,p:0,f:0,c:0,fb:0};S.food.records.push({date:td(),meal:'lunch',name,kcal:d.k,protein:d.p,fat:d.f,carbs:d.c,fiber:d.fb,time:new Date().toISOString()});sv('food',S.food);document.getElementById('fpResult').innerHTML='';document.getElementById('fpInput').value='';rFood();toast(`✅ ${name}（${d.k}kcal）`)}
+function rFood(){
+  const today=td(),recs=S.food.records.filter(r=>r.date===today),meals={breakfast:[],lunch:[],dinner:[],snack:[]};
+  recs.forEach(r=>{if(meals[r.meal])meals[r.meal].push(r)});
+  const mn={breakfast:'🌅早餐',lunch:'☀️午餐',dinner:'🌙晚餐',snack:'🍪加餐'},mi={breakfast:'🥐',lunch:'🍱',dinner:'🍲',snack:'🍪'};
+  document.getElementById('mealLog').innerHTML=Object.entries(meals).map(([k,v])=>{const tk=v.reduce((s,i)=>s+i.kcal,0);return `<div class="food-meal" onclick="openFoodModal('${k}')"><span class="mi">${mi[k]}</span><div class="mn">${mn[k]}</div><div class="mk">${tk}kcal</div>${v.length?`<div style="font-size:7px;color:var(--g500)">${v.map(i=>i.name).join('、')}</div>`:'<div style="font-size:7px;color:var(--g300)">暂无</div>'}</div>`}).join('');
+  const tk=recs.reduce((s,r)=>s+r.kcal,0),tp=recs.reduce((s,r)=>s+(r.protein||0),0),tf=recs.reduce((s,r)=>s+(r.fat||0),0),tc=recs.reduce((s,r)=>s+(r.carbs||0),0),tfb=recs.reduce((s,r)=>s+(r.fiber||0),0);
+  document.getElementById('tk').textContent=tk;
+  document.getElementById('nutriBars').innerHTML=[['protein','🥩蛋白质',tp,55],['fat','🧈脂肪',tf,45],['carbs','🍚碳水',tc,180],['fiber','🥬纤维',tfb,25]].map(([k,l,v,t])=>{const p=Math.min(v/t*100,100),c=p>=90?'#2E8B57':p>=60?'#FFB347':'#E8557A';return `<div class="nutri-row"><span class="nutri-label">${l}</span><div class="nutri-track"><div class="nutri-fill" style="width:${p}%;background:${c}"></div></div><span class="nutri-val">${Math.round(v)}/${t}g</span></div>`}).join('');
+  const menu=getWeekMenu();
+  document.getElementById('menuRec').innerHTML=menu.map(m=>`<div class="menu-card" onclick="showRecipe('${m.n.split('+')[0].trim().split('（')[0]}')"><h4>${m.n} <span style="font-size:9px;color:var(--g500)">~${m.k}kcal</span></h4><p style="font-size:8px;color:var(--g500)">${m.cat} · 点击查看做法</p><div class="menu-rating">${[1,2,3,4,5].map(s=>`<span class="${s<=(S.food.menuRatings||{})[m.n]||s<=3?'active':''}" onclick="event.stopPropagation();rateMenu('${m.n}',${s})">${s<=(S.food.menuRatings||{})[m.n]||s<=3?'⭐':'☆'}</span>`).join('')}</div></div>`).join('');
+}
+function openFoodModal(mt){if(mt)document.getElementById('fmt').value=mt;document.getElementById('foodModal').classList.add('show')}
+function closeFoodModal(){document.getElementById('foodModal').classList.remove('show')}
+function addFood(){const meal=document.getElementById('fmt').value,name=document.getElementById('fnm').value.trim(),kcal=parseInt(document.getElementById('fkl').value)||0;if(!name||!kcal){toast('请填写完整');return}const db=FDB[name]||{k:kcal,p:0,f:0,c:0,fb:0};S.food.records.push({date:td(),meal,name,kcal:db.k||kcal,protein:db.p||0,fat:db.f||0,carbs:db.c||0,fiber:db.fb||0,time:new Date().toISOString()});sv('food',S.food);closeFoodModal();document.getElementById('fnm').value='';document.getElementById('fkl').value='';rFood();toast('✅ 已记录')}
+
+// ============ EXERCISE ============
+const EX=[{d:'周一',t:'有氧',f:'🚴‍♀️单车',items:[{n:'骑单车',dr:'30-40分钟',in:'中等'},{n:'拉伸',dr:'5分钟',in:'静态',lk:'https://www.bilibili.com/video/BV1jJ4m1N7nN'}],a:true},{d:'周二',t:'休息',f:'🧘‍♀️放松',items:[{n:'睡前拉伸',dr:'10分钟',in:'轻度',lk:'https://www.bilibili.com/video/BV1Li4y1d7XV'}],a:false},{d:'周三',t:'力量',f:'💪居家',items:[{n:'帕梅拉15分钟',dr:'15分钟',in:'中高',lk:'https://www.bilibili.com/video/BV1Wh411m7eG'},{n:'平板支撑3组',dr:'每组30秒',in:'核心'},{n:'按摩滚轮',dr:'5分钟',in:'轻度'}],a:true},{d:'周四',t:'休息',f:'🛀恢复',items:[{n:'散步或拉伸',dr:'15分钟',in:'随意'}],a:false},{d:'周五',t:'有氧',f:'🚴‍♀️单车',items:[{n:'骑单车',dr:'30-40分钟',in:'中等'},{n:'按摩滚轮',dr:'5分钟',in:'轻度'}],a:true},{d:'周六',t:'综合',f:'🌿自由',items:[{n:'快走/慢跑',dr:'30分钟',in:'轻度'},{n:'瑜伽拉伸',dr:'15分钟',in:'放松',lk:'https://www.bilibili.com/video/BV1Li4y1d7XV'}],a:true},{d:'周日',t:'休息',f:'🌸放松',items:[{n:'按摩滚轮',dr:'10分钟',in:'轻度'}],a:false}];
+function rEx(){const td_=new Date(),ws=new Date(td_);ws.setDate(td_.getDate()-(td_.getDay()+6)%7);const wk=ws.toISOString().slice(0,10);if(S.exercise.wk!==wk){S.exercise.wk=wk;S.exercise.wd={};sv('exercise',S.exercise)}const tdi=(td_.getDay()+6)%7,dc=Object.values(S.exercise.wd||{}).filter(Boolean).length;document.getElementById('exStats').innerHTML=`<div class="stat-card"><div class="n">${dc}/${EX.filter(d=>d.a).length}</div><div class="l">打卡</div></div><div class="stat-card"><div class="n">${S.exercise.streak||0}</div><div class="l">🔥连周</div></div><div class="stat-card"><div class="n">160cm</div><div class="l">身高</div></div><div class="stat-card"><div class="n">53kg</div><div class="l">体重</div></div>`;document.getElementById('exPlan').innerHTML=EX.map((day,idx)=>`<div class="ex-day${idx===tdi?' today':''}${!day.a?' rest':''}"><div class="dt">${day.d}·${day.t}·${day.f}${idx===tdi?' 👈':''}${!day.a?'（休息）':''}</div>${day.items.map((it,i)=>`<div class="ex-item"><span class="ex-check${(S.exercise.wd||{})[`${day.d}-${i}`]?' done':''}" onclick="toggleEx('${day.d}',${i})">${(S.exercise.wd||{})[`${day.d}-${i}`]?'✓':''}</span><span>${it.n}<span style="color:var(--g500);font-size:8px">(${it.dr})</span></span>${it.lk?`<span class="ex-link" onclick="window.open('${it.lk}','_blank')">📺</span>`:''}</div>`).join('')}</div>`).join('')}
+function toggleEx(d,i){const k=`${d}-${i}`;S.exercise.wd=S.exercise.wd||{};S.exercise.wd[k]=!S.exercise.wd[k];sv('exercise',S.exercise);rEx();toast(S.exercise.wd[k]?'✅完成':'已取消')}
+
+// ============ FINANCE ============
+function rFin(){const recs=S.finance.records||[],tm=td().slice(0,7),mr=recs.filter(r=>r.date.startsWith(tm)),exp=mr.filter(r=>r.type==='expense'),inc=mr.filter(r=>r.type==='income'),te=exp.reduce((s,r)=>s+r.amount,0),ti=inc.reduce((s,r)=>s+r.amount,0),bgt=S.finance.budget||3000,bp=Math.min(te/bgt*100,100),rem=bgt-te;document.getElementById('te').textContent='¥'+te.toFixed(0);document.getElementById('ti').textContent='¥'+ti.toFixed(0);document.getElementById('tb').textContent='¥'+(ti-te).toFixed(0);document.getElementById('bd').textContent='¥'+bgt;document.getElementById('bu').textContent='¥'+te.toFixed(0);document.getElementById('br').textContent='¥'+rem.toFixed(0);document.getElementById('br').style.color=rem<0?'#E8557A':'#2E8B57';const bar=document.getElementById('bb');bar.style.width=bp+'%';bar.className='budget-fill'+(bp>80?' warn':'');document.getElementById('qt').innerHTML=[{l:'🍜午餐35',a:35,c:'餐饮',t:'expense'},{l:'🚇地铁6',a:6,c:'交通',t:'expense'},{l:'☕咖啡25',a:25,c:'餐饮',t:'expense'},{l:'🥡外卖45',a:45,c:'餐饮',t:'expense'},{l:'💳工资',a:0,c:'其他',t:'income'}].map(q=>`<span class="quick-tag" onclick="qr(${q.a},'${q.c}','${q.t}','${q.l}')">${q.l}</span>`).join('');drawPie(exp);document.getElementById('fl').innerHTML=recs.slice(-12).reverse().map((r,i)=>{const idx=recs.length-1-i;return `<div class="record-row"><span>${r.category||''} ${r.note||''}</span><span style="color:${r.type==='expense'?'#E8557A':'#2E8B57'};font-weight:600">${r.type==='expense'?'-':'+'}¥${r.amount.toFixed(2)}</span><span class="del" onclick="delFin(${idx})">×</span></div>`}).join('')}
+function qr(a,c,t,l){if(t==='income'){const v=parseFloat(prompt('输入工资收入：'));if(!v||v<=0)return;a=v}S.finance.records=S.finance.records||[];S.finance.records.push({date:td(),type:t,amount:a,category:c,note:l,time:new Date().toISOString()});sv('finance',S.finance);rFin();toast('✅ '+l)}
+let recog=null;
+function toggleVoice(){const btn=document.getElementById('voiceBtn'),st=document.getElementById('voiceStatus');if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){toast('⚠️ 请用Safari打开');return}if(recog){recog.stop();recog=null;btn.classList.remove('recording');btn.textContent='🎤语音';st.textContent='';return}const SR=window.SpeechRecognition||window.webkitSpeechRecognition;recog=new SR();recog.lang='zh-CN';recog.continuous=false;btn.classList.add('recording');btn.textContent='🔴听...';st.textContent='说出金额和类别';recog.start();recog.onresult=(e)=>{const text=e.results[0][0].transcript;st.textContent='识别：'+text;const am=text.match(/(\d+)\s*块|(\d+)\s*元/);const amt=am?parseInt(am[1]||am[2]):0;let cat='其他';if(/午|晚|早|饭|吃|外卖|奶茶|咖啡/.test(text))cat='餐饮';else if(/地铁|公交|打车|车/.test(text))cat='交通';else if(/买|购物|衣服/.test(text))cat='购物';else if(/电影|唱|玩/.test(text))cat='娱乐';else if(/房租|水电/.test(text))cat='住房';if(amt>0){S.finance.records=S.finance.records||[];S.finance.records.push({date:td(),type:'expense',amount:amt,category:cat,note:text,time:new Date().toISOString()});sv('finance',S.finance);rFin();toast(`✅ ${cat} ¥${amt}`)}else toast('没识别到金额')};recog.onerror=()=>{toast('识别出错');btn.classList.remove('recording');btn.textContent='🎤语音';st.textContent='';recog=null};recog.onend=()=>{btn.classList.remove('recording');btn.textContent='🎤语音';st.textContent='';recog=null}}
+function addFin(){const a=parseFloat(document.getElementById('fa').value),t=document.getElementById('ft').value,c=document.getElementById('fc').value;if(!a||a<=0){toast('输入金额');return}S.finance.records=S.finance.records||[];S.finance.records.push({date:td(),type:t,amount:a,category:c,note:'',time:new Date().toISOString()});sv('finance',S.finance);document.getElementById('fa').value='';rFin();toast('✅ 已记账')}
+function delFin(i){S.finance.records.splice(i,1);sv('finance',S.finance);rFin()}
+function setBudget(){document.getElementById('bgi').value=S.finance.budget||3000;document.getElementById('budgetModal').classList.add('show')}
+function closeBudget(){document.getElementById('budgetModal').classList.remove('show')}
+function saveBudget(){const v=parseInt(document.getElementById('bgi').value)||3000;S.finance.budget=v;sv('finance',S.finance);closeBudget();rFin();toast('✅ 预算已更新')}
+function drawPie(exp){const c=document.getElementById('pieChart');if(!c)return;const ctx=c.getContext('2d');ctx.clearRect(0,0,240,240);if(!exp.length){ctx.fillStyle='#9E9E9E';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('暂无支出',120,120);return}const cats={};exp.forEach(r=>{cats[r.category]=(cats[r.category]||0)+r.amount});const total=Object.values(cats).reduce((s,v)=>s+v,0),colors=['#FF6B8A','#FFB347','#87CEEB','#90EE90','#DDA0DD','#F0E68C'],es=Object.entries(cats);let sa=-Math.PI/2,cx=120,cy=100,rr=70;es.forEach(([ct,am],i)=>{const sl=(am/total)*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,rr,sa,sa+sl);ctx.closePath();ctx.fillStyle=colors[i%6];ctx.fill();ctx.strokeStyle='#FFF';ctx.lineWidth=2;ctx.stroke();const ma=sa+sl/2;ctx.fillStyle='#FFF';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText(Math.round(am/total*100)+'%',cx+Math.cos(ma)*rr*.5,cy+Math.sin(ma)*rr*.5);sa+=sl});ctx.textAlign='left';es.forEach(([ct,am],i)=>{const y=225-es.length*13+i*13;ctx.fillStyle=colors[i%6];ctx.fillRect(7,y-6,8,8);ctx.fillStyle='#616161';ctx.font='8px sans-serif';ctx.fillText(`${ct} ¥${am.toFixed(0)}`,18,y+1)})}
+
+// ============ READING (书架系统+划金句+搜书) ============
+// 推荐书池（内置10本，6本展示，可刷新）
+const ALL_REC_BOOKS=[
+  {id:'prince',title:'小王子',author:'圣-埃克苏佩里',emoji:'🌹',cat:'经典文学',chapters:7,desc:'全球销量仅次于《圣经》的治愈经典。关于爱、责任与成长。'},
+  {id:'renjian',title:'人间词话',author:'王国维',emoji:'📜',cat:'国学精粹',chapters:4,desc:'"人生三境界"就出自这里。对文案写作极有启发。'},
+  {id:'fusheng',title:'浮生六记',author:'沈复',emoji:'🏮',cat:'古典生活',chapters:2,desc:'中国文学史上最可爱的女人。中女选题灵感来源。'},
+  {id:'courage',title:'被讨厌的勇气',author:'岸见一郎',emoji:'💪',cat:'自我提升',chapters:5,desc:'阿德勒心理学通俗读本。"课题分离"对职场关系极有帮助。'},
+  {id:'atomic',title:'原子习惯',author:'詹姆斯·克利尔',emoji:'⚛️',cat:'自我提升',chapters:5,desc:'每天进步1%，一年后你会是现在的37倍。'},
+  {id:'nonviolent',title:'非暴力沟通',author:'马歇尔·卢森堡',emoji:'🗣️',cat:'职场技能',chapters:4,desc:'公众号运营必备！教你用语言建立连接而非对抗。'},
+  {id:'qiuyuan',title:'秋园',author:'杨本芬',emoji:'📖',cat:'文学',chapters:3,desc:'80岁奶奶写的女性家族史。对中女选题有深刻启发。'},
+  {id:'operate',title:'运营之光',author:'黄有璨',emoji:'💡',cat:'职场技能',chapters:4,desc:'互联网运营经典，方法论可直接用到公众号运营。'},
+  {id:'findme',title:'也许你该找个人聊聊',author:'洛莉·戈特利布',emoji:'🛋️',cat:'心理成长',chapters:5,desc:'心理治疗师的回忆录，关于脆弱与自我和解。'},
+  {id:'deepwork',title:'深度工作',author:'卡尔·纽波特',emoji:'🧠',cat:'自我提升',chapters:5,desc:'在分心时代如何专注。对内容创作者尤其重要。'}
+];
+
+// 内置书全文
+const BOOK_FULL={
+  prince:[{t:'第1章·当画家的梦想',c:'<p>我六岁时，在一本描写原始森林的书中，看到一幅精彩的插图：一条蟒蛇正在吞食一只野兽。书里说："蟒蛇嚼都不嚼就把猎物整个吞下去，然后动不了，需要睡上半年才能消化。"</p><p>于是我画了生平第一幅画：一条蟒蛇正在消化一头大象。我拿给大人们看，问他们怕不怕。他们却说："一顶帽子有什么好怕的？"我画的不是帽子，是一条蟒蛇在消化大象。为了让大人们看懂，我又画了第二幅：蟒蛇的剖面图。大人们劝我把画收起来，专心学地理、历史、算术和语法。就这样，六岁那年，我放弃了当画家的梦想。</p><p>后来我选择了开飞机。我飞遍了全世界。我的一生中，跟许多严肃的人打过交道。当遇到一个看起来头脑清楚的人，我就会拿出一直珍藏的第一幅画给他看。但每次得到的回答都是"这是一顶帽子"。于是我就不跟他谈蟒蛇、原始森林和星星了。我会迁就他，跟他谈桥牌、高尔夫、政治和领带。大人们就很高兴。</p>'},
+  {t:'第2章·遇见小王子',c:'<p>我就这样孤独地生活着，直到六年前飞机在撒哈拉沙漠出了故障。第一天晚上，我睡在沙漠里。天刚亮时，一个奇怪的小声音把我叫醒："请你……给我画一只绵羊吧！"我跳了起来，眼前是一个非常奇特的小人儿，正认真地打量着我。</p><p>我瞪大眼睛看着这个突然出现的小家伙。在远离人烟的沙漠里！但这个小家伙看起来既不像是迷路了，也不像是累坏了。他轻轻地、郑重其事地重复道："请你……给我画一只绵羊……"我从口袋里掏出一张纸和一支笔。我说我不会画画，他回答："没关系，给我画一只绵羊。"我给他画了蟒蛇的外观图。小家伙的反应让我大吃一惊："不，不，不！我不要蟒蛇肚子里的大象。蟒蛇太危险，大象又太占地方。我住的地方，什么都很小。我需要一只绵羊。"</p><p>于是我就画了。他仔细看了看："不行，这只羊已经病恹恹的了。"我又画了一只："这不是绵羊，是山羊。它有角……"我急着拆发动机，就草草画了一个箱子："你要的绵羊就在里面。"我的小法官脸上顿时亮了起来："这正是我想要的！"就这样，我认识了小王子。</p>'},
+  {t:'第3章·B-612小行星',c:'<p>我花了很长时间才搞清楚他来自哪里。他含糊其辞地提到"别的星球"，激起了我多大的好奇心。</p><p>我有充分的理由相信，小王子的星球是小行星B-612。这颗小行星只在1909年被一位土耳其天文学家通过望远镜看到过一次。他在国际天文学大会上展示了他的发现，但没有人相信他，因为他穿着土耳其传统服装。大人们就是这样。后来一位土耳其独裁者命令臣民改穿欧式服装，那位天文学家穿着优雅的欧式西装重新做了报告，这一次，所有人都信了。</p><p>我之所以告诉你这些，都是因为大人们。大人们喜欢数字。你告诉他们你交了一个新朋友，他们从不会问真正重要的问题。他们从不会问："他的声音是什么样的？他最喜欢什么游戏？"他们会问："他几岁了？有几个兄弟？体重多少？他爸爸赚多少钱？"只有知道了这些数字，他们才觉得"了解"了这个人。如果你对大人们说："我看到一栋漂亮的房子，玫瑰色的砖墙，窗口有天竺葵，屋顶上有鸽子……"他们完全无法想象。你必须说："我看到一栋价值十万法郎的房子。"他们就会叫起来："哇，那一定很漂亮！"</p>'},
+  {t:'第4章·猴面包树',c:'<p>每一天，我都会从小王子的谈话中了解到一些关于他星球的事。第三天，我知道了猴面包树的悲剧。小王子突然问我："绵羊会吃小灌木，这是真的吗？""是的，真的。""啊！那我真高兴。"</p><p>我不明白为什么绵羊吃小灌木这么重要。但小王子继续说："那么，它们也会吃猴面包树？"我提醒他，猴面包树可不是小灌木，而是像教堂那么大的大树。他聪明地指出："猴面包树在长成大树之前，一开始也是小苗。"</p><p>事实上，小王子的星球上，有一种可怕的种子：猴面包树的种子。如果你发现得太晚，就永远摆脱不了了。它的根会穿透星球。如果星球太小而猴面包树太多，它们会把星球撑裂。"这是一个纪律问题。"小王子后来告诉我。"早上梳洗完毕后，你得仔细梳洗你的星球。猴面包树和玫瑰树小时候长得很像。一旦你能分辨出它们，就必须定期强迫自己拔掉猴面包树苗。"</p>'},
+  {t:'第5章·四十四次日落',c:'<p>啊，小王子！我就这样一点一点地了解了你那忧伤的小生命。很长一段时间里，你唯一的消遣就是欣赏日落的温柔。</p><p>"我很喜欢日落。我们一起去看日落吧……""可是得等一等……""等什么？""等日落。要等到傍晚才行。"你先是露出惊讶的表情，然后自己笑了。你对我说："我老以为自己还在家里呢！"</p><p>确实。在你的小星球上，你只需要把椅子挪几步就行了。你想看的时候，随时可以看到黄昏……"有一天，"你对我说，"我看了四十四次日落。"过了一会儿，你又补充道："你知道的——人在难过的时候，就会爱上日落……""那么，看了四十四次日落的那天，你一定很难过吧？"但小王子没有回答。</p>'},
+  {t:'第6章·独一无二的花',c:'<p>第五天，小王子突然没头没脑地问我："如果绵羊吃小灌木��那它也会吃花吗？""绵羊碰到什么就吃什么。""连有刺的花也吃？""是的。""那么，刺有什么用呢？"我不知道。当时我正忙着拧发动机上的一颗卡住的螺丝。</p><p>"那么，刺有什么用呢？"小王子一旦问出一个问题，是绝不会放弃的。我随口答道："刺没什么用，纯粹是花的恶意！""哦！"沉默了一会儿，他带着怨恨冲我说："我不信！花是脆弱的。它们很天真。它们尽最大努力保护自己。"</p><p>他真的很生气："几百万年来，花都在长刺。几百万年来，绵羊照样吃花。去认真理解为什么花要费那么大劲去长那些没用的刺——难道这不重要吗？如果我认识一朵世界上独一无二的花——它只存在于我的星球上——但某天早上，一只小绵羊一口就能把它吃掉——这难道也不重要吗！"他的脸红了："如果有人爱上一朵花——在千百万颗星星中唯一的一朵——他只要看着星星就会感到幸福。但如果绵羊吃掉了那朵花，对他来说，就好像所有的星星都突然熄灭了！"他说不下去了，突然哭了起来。夜色降临了。我丢下工具，把他抱在怀里。我不知道怎么走进他的世界……眼泪的国度，是多么神秘啊。</p>'}],
+  renjian:[{t:'卷一·词以境界为最上',c:'<p>词以境界为最上。有境界则自成高格，自有名句。五代、北宋之词所以独绝者在此。</p><p>有有我之境，有无我之境。"泪眼问花花不语，乱红飞过秋千去。"有我之境也。"采菊东篱下，悠然见南山。"无我之境也。有我之境，以我观物，故物皆著我之色彩。无我之境，以物观物，故不知何者为我，何者为物。</p>'},
+  {t:'卷二·人生三境界',c:'<p>古今之成大事业、大学问者，必经过三种之境界："昨夜西风凋碧树。独上高楼，望尽天涯路。"此第一境也。"衣带渐宽终不悔，为伊消得人憔悴。"此第二境也。"众里寻他千百度，蓦然回首，那人却在，灯火阑珊处。"此第三境也。</p><p>对公众号运营的启发：做内容也是三重境界——先确定定位和方向（独上高楼），然后持续输出不断打磨（衣带渐宽），最后找到独特风格和爆款密码（蓦然回首）。</p>'},
+  {t:'卷三·真景物与真感情',c:'<p>境非独谓景物也。喜怒哀乐，亦人心中之一境界。故能写真景物、真感情者，谓之有境界。否则谓之无境界。"红杏枝头春意闹"，著一"闹"字，而境界全出。"云破月来花弄影"，著一"弄"字，而境界全出矣。</p><p>写文章也是同样的道理。好的公众号文章不是堆砌辞藻，而是找到那个"一字之妙"：一个精准的比喻、一个贴切的案例、一句打到心里的金句，境界就出来了。</p>'}],
+  fusheng:[{t:'卷一·闺房记乐',c:'<p>余生乾隆癸未冬十一月二十有二日，正值太平盛世，且在衣冠之家，居苏州沧浪亭畔，天之厚我，可谓至矣。东坡云："事如春梦了无痕。"苟不记之笔墨，未免有辜彼苍之厚。</p><p>芸，沈复的妻子，被林语堂称为"中国文学史上最可爱的女人"。芸作新妇，初甚缄默，终日无怒容，与之言，微笑而已。每见朝暾上窗，即披衣急起。余笑曰："今非吃粥比矣，何尚畏人嘲耶？"芸曰："曩之藏粥待君，传为话柄。今非畏嘲，恐堂上道新娘懒惰耳。"</p><p>余尝曰："惜卿雌而伏，苟能化女为男，相与访名山，搜胜迹，遨游天下，不亦快哉！"芸曰："此何难，俟妾鬓斑之后，虽不能远游五岳，而近地之虎阜、灵岩，南至西湖，北至平山，尽可偕游。"余曰："恐卿鬓斑之日，步履已艰。"芸曰："今世不能，期以来世。"余曰："来世卿当作男，我为女子相从。"芸曰："必得不昧今生，方觉有情趣。"</p><p>这是多么动人的爱情。没有任何华丽的辞藻，就是一对普通夫妻关于一起变老、一起旅行的对话。对中女选题的启发：最好的情感故事，不是惊天动地，而是日常里那些"记得带上我"的时刻。</p>'}],
+  courage:[{t:'核心精读·课题分离',c:'<p>阿德勒心理学明确否定"心理创伤"。他认为：决定我们自身的不是过去的经历，而是我们自己赋予经历的意义。人生不是由别人赋予的，而是由自己选择的。</p><p>核心概念：课题分离。基本上，一切人际关系矛盾都起因于对别人的课题妄加干涉，或者自己的课题被别人妄加干涉。辨别"这是谁的课题"的方法非常简单：某种选择所带来的结果最终要由谁来承担？</p><p>对公众号运营的启发：你的文章是"你的课题"，读者的评价是"读者的课题"。写你想写的，不要被数据绑架。</p>'}],
+  atomic:[{t:'核心精读·习惯的力量',c:'<p>习惯的四步模型：提示→渴求→回应→奖赏。让习惯变得明显——执行意向公式："我会于[时间]在[地点]做[行为]"。例如："我会在每天下班前5点，在公司健身房骑30分钟单车。"</p><p>两分钟法则：新习惯应该在两分钟内完成。想养成阅读习惯？从"每天读一页"开始。环境设计比意志力更重要：如果你想少吃零食，把零食放在看不见的地方。如果你想多运动，把瑜伽垫铺在显眼的地方。</p>'}],
+  nonviolent:[{t:'核心精读·非暴力沟通',c:'<p>非暴力沟通四步法：1️⃣观察——说出客观事实，不加评判 2️⃣感受——表达你的真实情绪 3️⃣需要——说出感受背后的需求 4️⃣请求——提出具体可行的请求。</p><p>对写文章的启发：好的公众号文章本质上就是一次"非暴力沟通"——观察现象（数据/故事）、表达感受（共鸣）、指出需求（痛点）、给出方案（干货）。</p>'}],
+  qiuyuan:[{t:'选段·女性的史诗',c:'<p>我写了一位普通中国女性一生的故事。她一生历经战乱、饥荒、政治运动、丧夫之痛，却像野草一样顽强地活着。秋园是洛阳人，嫁到湖南。她裹过脚，后来放了。她上过几年私塾，认得一些字。她生了五个孩子，活了三个。她一生都想读书，却一生都没有机会。</p><p>选题启发：你的读者中，有多少人的母亲就像秋园？「中女」话题的本质，是两代女性之间的理解与和解。</p>'}],
+  operate:[{t:'核心精读·好内容的三个层次',c:'<p>1️⃣有用——读者看完能带走什么 2️⃣有感——触动情绪，引发共鸣 3️⃣有范——形成独特风格和品牌调性。选题的三个来源：热点事件追踪、用户需求挖掘、个人经验沉淀。最好的选题往往是三者的交集。数据驱动的优化思维：每篇文章都是一次实验。标题A/B测试、发布时间优化、互动率分析——用数据说话，而不是凭感觉。</p>'}],
+  findme:[{t:'选段·允许自己脆弱',c:'<p>我们每个人都有自己的"监狱"，有些是别人建的，有些是自己建的。而心理治疗的意义，不是帮你逃出去，而是帮你看到：门其实一直开着。来访者约翰说："我来找你是因为我妻子逼我来的。我没什么问题。"但几周后，他在治疗室里哭了——不是因为什么大事，而是因为他发现自己已经很久没有真正"感受"过任何东西了。作为一名治疗师，我最大的发现是：痛苦不需要比较。你的痛苦是真实的，不管别人经历过什么。允许自己脆弱，恰恰是强大的开始。</p>'}]
+};
+
+function getRecBooks(){
+  const idx=(S.reading.bookRecIdx||0)%ALL_REC_BOOKS.length;
+  const books=[];
+  for(let i=0;i<6;i++)books.push(ALL_REC_BOOKS[(idx+i)%ALL_REC_BOOKS.length]);
+  return books;
+}
+function refreshBooks(){
+  S.reading.bookRecIdx=(S.reading.bookRecIdx||0)+3;
+  sv('reading',S.reading);
+  rRead();
+  toast('🔄 已换一批推荐');
+}
+
+function addToShelf(bookId){
+  S.reading.shelf=S.reading.shelf||{};
+  if(S.reading.shelf[bookId]){toast('已在书架中');return}
+  const b=ALL_REC_BOOKS.find(x=>x.id===bookId)||{id:bookId,title:'未知书籍',author:'',emoji:'📖',cat:'',chapters:1};
+  S.reading.shelf[bookId]={...b,added:td(),progress:0,currentCh:0,done:false};
+  sv('reading',S.reading);
+  rRead();
+  toast('📚 已加入书架');
+}
+
+function rRead(){
+  const recBooks=getRecBooks();
+  document.getElementById('bookList').innerHTML=recBooks.map(b=>{
+    const onShelf=!!(S.reading.shelf||{})[b.id];
+    return `<div class="book-card" onclick="${onShelf?`openReader('${b.id}')`:`addToShelf('${b.id}')`}"><div class="book-cover">${b.emoji}</div><div class="book-info"><h4>${b.title}</h4><div class="au">${b.author} · ${b.cat}</div><div class="dc">${b.desc}</div><div style="font-size:9px;color:var(--p500);margin-top:2px">📖 ${b.chapters}章 · ${onShelf?'点击阅读':'点击加入书架'}</div></div></div>`;
+  }).join('');
+
+  // 金句
+  const qi=[{t:'我们终其一生，就是要摆脱他人的期待，找到真正的自己。',s:'《无声告白》'},{t:'你不需要成为更好的自己，你只需要更好地成为自己。',s:'佚名'},{t:'种一棵树最好的时间是十年前，其次是现在。',s:'非洲谚语'}][new Date().getDate()%3];
+  document.getElementById('quoteCard').innerHTML=`<div class="quote-card">"${qi.t}"<div class="quote-src">—— ${qi.s}</div></div>`;
+  document.getElementById('rnotes').innerHTML=(S.reading.notes||[]).slice(-5).reverse().map(n=>`<div class="diary-entry"><div class="dt">${n.date}</div><div class="tx">${n.text}</div></div>`).join('');
+}
+
+function rShelf(){
+  const shelf=S.reading.shelf||{};
+  const reading=Object.entries(shelf).filter(([k,v])=>!v.done);
+  const done=Object.entries(shelf).filter(([k,v])=>v.done);
+
+  document.getElementById('shelfReading').innerHTML=reading.length?reading.map(([id,b])=>`<div class="shelf-card" onclick="openReader('${id}')"><div class="sc">${b.emoji||'📖'}</div><div style="flex:1"><h4 style="font-size:11px">${b.title}</h4><div style="font-size:8px;color:var(--g500)">${b.author}</div><div class="book-progress"><div class="book-progress-fill" style="width:${(b.progress||0)*100}%"></div></div><div class="book-progress-label">进度 ${Math.round((b.progress||0)*100)}% · ${b.chapters||'?'}章</div></div></div>`).join(''):'<div style="text-align:center;padding:16px;color:var(--g500);font-size:11px">📚 去「推荐」或「搜书」添加想读的书吧~</div>';
+
+  document.getElementById('shelfDone').innerHTML=done.length?done.map(([id,b])=>`<div class="shelf-card" onclick="openReader('${id}')" style="opacity:.7"><div class="sc">${b.emoji||'📖'}</div><div style="flex:1"><h4 style="font-size:11px">${b.title} ✅</h4><div style="font-size:8px;color:var(--g500)">${b.author}</div><div class="book-progress"><div class="book-progress-fill" style="width:100%;background:#2E8B57"></div></div><div class="book-progress-label">已读完 🎉</div></div></div>`).join(''):'<div style="text-align:center;padding:10px;color:var(--g500);font-size:10px">还没有读完的书，加油~</div>';
+}
+
+async function searchBooks(){
+  const q=document.getElementById('sq').value.trim();
+  if(!q||q.length<2){toast('请输入至少2个字');return}
+  document.getElementById('sr').innerHTML='<div style="text-align:center;padding:20px;color:var(--g500)">🔍 搜索中...</div>';
+
+  try{
+    const resp=await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const data=await resp.json();
+    if(!data.books||!data.books.length){
+      document.getElementById('sr').innerHTML='<div style="text-align:center;padding:20px;color:var(--g500)">😔 未找到相关书籍，试试其他关键词</div>';
+      return;
+    }
+    document.getElementById('sr').innerHTML=data.books.map(b=>{
+      const onShelf=!!(S.reading.shelf||{})[b.id];
+      return `<div class="search-item"><div><b>${b.title}</b><div style="font-size:9px;color:var(--g500)">${b.author} · ${b.source||''}</div></div>${onShelf?`<span style="font-size:9px;color:var(--p400)">已在书架</span>`:`<button class="add-btn" onclick="addSearchToShelf('${b.id}','${b.title.replace(/'/g,"\\'")}','${(b.author||'').replace(/'/g,"\\'")}')">+书架</button>`}</div>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('sr').innerHTML='<div style="text-align:center;padding:20px;color:var(--g500)">搜索失败，请检查网络</div>';
+  }
+}
+
+function addSearchToShelf(id,title,author){
+  S.reading.shelf=S.reading.shelf||{};
+  if(S.reading.shelf[id]){toast('已在书架中');return}
+  S.reading.shelf[id]={id,title,author,emoji:'📖',cat:'',chapters:1,added:td(),progress:0,currentCh:0,done:false};
+  sv('reading',S.reading);
+  rRead();
+  toast('📚 已加入书架');
+}
+
+function openReader(bookId){
+  const shelf=S.reading.shelf||{};
+  let book=shelf[bookId];
+  if(!book){
+    // 从推荐列表找
+    const b=ALL_REC_BOOKS.find(x=>x.id===bookId);
+    if(b){addToShelf(bookId);book=(S.reading.shelf||{})[bookId]}
+    else{toast('请先加入书架');return}
+  }
+  S.reading.currentBook=bookId;
+  const content=BOOK_FULL[bookId];
+  if(!content){
+    // 尝试从网络获取
+    toast('📖 正在加载书籍...');
+    fetch(`/api/book/${bookId}`).then(r=>r.json()).then(data=>{
+      if(data.chapters&&data.chapters.length){
+        BOOK_FULL[bookId]=data.chapters;
+        renderBookReader(bookId,data.chapters);
+      }else{toast('书籍内容加载失败')}
+    }).catch(()=>toast('加载失败，请检查网络'));
+    return;
+  }
+  renderBookReader(bookId,content);
+}
+
+function renderBookReader(bookId,content){
+  const b=(S.reading.shelf||{})[bookId];
+  document.getElementById('rtitle').textContent=(b?.emoji||'📖')+' '+ (b?.title||'阅读');
+  S.reading.currentCh=b?.currentCh||0;
+  renderCNav(content);
+  renderCh(S.reading.currentCh,content);
+  renderHighlights(bookId);
+  document.getElementById('readerModal').classList.add('show');
+}
+
+function renderCNav(content){
+  document.getElementById('cnav').innerHTML=content.map((ch,i)=>`<button class="${i===S.reading.currentCh?'active':''}" onclick="renderCh(${i},BOOK_FULL['${S.reading.currentBook}'])">${i+1}</button>`).join('');
+}
+
+function renderCh(idx,content){
+  S.reading.currentCh=idx;
+  const ch=content[idx];
+  if(!ch)return;
+  document.getElementById('rct').innerHTML=`<h4>${ch.t}</h4>${ch.c}`;
+  document.getElementById('rct').scrollTop=0;
+  renderCNav(content);
+  // 给段落加点击事件用于划金句
+  document.querySelectorAll('#rct p').forEach(p=>{
+    p.addEventListener('click',function(e){
+      const text=this.textContent.trim();
+      if(text.length>10){
+        S.hlText=text;S.hlBook=S.reading.currentBook;
+        document.getElementById('hquote').textContent='"'+text.substring(0,200)+(text.length>200?'...':'')+'"';
+        document.getElementById('hnote').value='';
+        document.getElementById('highlightModal').classList.add('show');
+      }
+    });
+  });
+  // 标记已划的金句
+  const bookHls=(S.reading.highlights||{})[S.reading.currentBook]||[];
+  document.querySelectorAll('#rct p').forEach(p=>{
+    const text=p.textContent.trim();
+    if(bookHls.some(h=>text.includes(h.text.substring(0,20))))p.classList.add('highlighted');
+  });
+}
+
+function renderHighlights(bookId){
+  const hls=(S.reading.highlights||{})[bookId]||[];
+  document.getElementById('hp').innerHTML=hls.length?`<div class="section-title">💬 本书金句（${hls.length}条）</div>${hls.map(h=>`<div class="highlight-item">"${h.text}"<div class="hnote">${h.note||''}</div></div>`).join('')}`:'';
+}
+
+function saveHighlight(){
+  const text=S.hlText,note=document.getElementById('hnote').value.trim(),bookId=S.hlBook;
+  if(!text)return;
+  S.reading.highlights=S.reading.highlights||{};
+  S.reading.highlights[bookId]=S.reading.highlights[bookId]||[];
+  S.reading.highlights[bookId].push({text:text.substring(0,300),note,date:td()});
+  sv('reading',S.reading);
+  document.getElementById('highlightModal').classList.remove('show');
+  renderHighlights(bookId);
+  // 重新渲染段落样式
+  const content=BOOK_FULL[bookId];
+  if(content)renderCh(S.reading.currentCh,content);
+  toast('💬 金句已保存');
+}
+
+function updateProgress(){
+  const bookId=S.reading.currentBook,content=BOOK_FULL[bookId];
+  if(!content)return;
+  const progress=(S.reading.currentCh+1)/content.length;
+  if(S.reading.shelf[bookId]){
+    S.reading.shelf[bookId].progress=progress;
+    S.reading.shelf[bookId].currentCh=S.reading.currentCh;
+    sv('reading',S.reading);
+  }
+  toast(`📊 进度 ${Math.round(progress*100)}%`);
+}
+
+function markReadDone(){
+  const bookId=S.reading.currentBook;
+  if(S.reading.shelf[bookId]){
+    S.reading.shelf[bookId].done=true;
+    S.reading.shelf[bookId].progress=1;
+    sv('reading',S.reading);
+  }
+  closeReader();
+  rRead();
+  toast('🎉 已标记读完！');
+}
+
+function closeReader(){document.getElementById('readerModal').classList.remove('show')}
+function saveRN(){const t=document.getElementById('rn').value.trim();if(!t){toast('写点什么吧~');return}S.reading.notes=S.reading.notes||[];S.reading.notes.push({date:td(),text:t});sv('reading',S.reading);document.getElementById('rn').value='';rRead();toast('✅ 已保存')}
+
+// ============ DIARY ============
+const DSTEPS=[{q:'🌸 第一步：今天最让你印象深刻的一件事？',ph:'比如：早上地铁上看到一个小朋友给妈妈让座...',f:'event'},{q:'💭 第二步：这件事让你有什么感觉？为什么？',ph:'开心/感动/生气...因为...',f:'feeling'},{q:'✨ 第三步：想对今天的自己说什么？',ph:'比如：你今天已经很棒了！',f:'message'}];
+function rD(){if(S.ds===0||!S.ds){document.getElementById('dg').innerHTML=`<div class="step active" id="ds0"><div class="sq">${DSTEPS[0].q}</div><input class="si" id="da0" placeholder="${DSTEPS[0].ph}"><button class="sb" onclick="nextDS()">下一步 →</button></div>`}document.getElementById('dl').innerHTML=(S.diary.entries||[]).slice(-10).reverse().map(e=>`<div class="diary-entry"><div style="display:flex;justify-content:space-between"><div class="dt">${e.date}</div><div class="md">${e.mood||'😊'}</div></div>${e.photo?`<img src="${e.photo}" style="width:100%;border-radius:8px;margin:3px 0;max-height:150px;object-fit:cover">`:''}<div class="tx">${e.text}</div></div>`).join('')}
+function nextDS(){const step=S.ds||0,ans=document.getElementById('da'+step)?.value||'';S.da=S.da||[];S.da[step]=ans;if(step<2){S.ds=step+1;document.getElementById('dg').innerHTML=`<div class="step active" id="ds${step+1}"><div class="sq">${DSTEPS[step+1].q}</div><input class="si" id="da${step+1}" placeholder="${DSTEPS[step+1].ph}"><button class="sb" onclick="nextDS()">${step+1<2?'下一步 →':'✨ 生成日记'}</button></div>`;setTimeout(()=>document.getElementById('da'+(step+1))?.focus(),100)}else{document.getElementById('dtxt').value=`${S.da[0]||''}\n\n当时的感觉：${S.da[1]||''}\n\n想对自己说：${S.da[2]||''}`;document.getElementById('dg').innerHTML=`<div class="step active" style="text-align:center;color:var(--p600);font-weight:600">✨ 日记已生成！<br><span style="font-size:10px;color:var(--g500)">可在下方编辑后保存</span></div>`;S.ds=0;S.da=[];toast('✨ 草稿已生成')}}
+function handleDP(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{S.dp=ev.target.result;document.getElementById('dpPrev').innerHTML=`<img src="${ev.target.result}" style="width:100%;border-radius:10px;max-height:160px;object-fit:cover">`};r.readAsDataURL(f)}
+function saveD(){const t=document.getElementById('dtxt').value.trim();if(!t&&!S.dp){toast('写点什么或拍张照吧~');return}S.diary.entries=S.diary.entries||[];S.diary.entries.push({date:td(),text:t,mood:S.dm,photo:S.dp,time:new Date().toISOString()});sv('diary',S.diary);document.getElementById('dtxt').value='';document.getElementById('dpPrev').innerHTML='';S.dp=null;document.getElementById('dpInput').value='';S.ds=0;S.da=[];rD();toast('🌸 已保存')}
+
+// ============ ENGLISH ============
+const WORDS=[{w:'deadline',p:'/ˈded.laɪn/',m:'截止日期'},{w:'brainstorm',p:'/ˈbreɪn.stɔːrm/',m:'头脑风暴'},{w:'feedback',p:'/ˈfiːd.bæk/',m:'反馈'},{w:'priority',p:'/praɪˈɒr.ə.ti/',m:'优先事项'},{w:'collaborate',p:'/kəˈlæb.ə.reɪt/',m:'合作'},{w:'schedule',p:'/ˈʃedʒ.uːl/',m:'日程'},{w:'proposal',p:'/prəˈpəʊ.zəl/',m:'提案'},{w:'strategy',p:'/ˈstræt.ə.dʒi/',m:'策略'},{w:'budget',p:'/ˈbʌdʒ.ɪt/',m:'预算'},{w:'campaign',p:'/kæmˈpeɪn/',m:'营销'},{w:'stakeholder',p:'/ˈsteɪk.həʊl.dər/',m:'利益相关者'},{w:'implement',p:'/ˈɪm.plɪ.ment/',m:'实施'},{w:'evaluate',p:'/ɪˈvæl.ju.eɪt/',m:'评估'},{w:'negotiate',p:'/nɪˈɡəʊ.ʃi.eɪt/',m:'谈判'},{w:'productivity',p:'/ˌprɒd.ʌkˈtɪv.ə.ti/',m:'生产力'},{w:'milestone',p:'/ˈmaɪl.stəʊn/',m:'里程碑'},{w:'benchmark',p:'/ˈbentʃ.mɑːrk/',m:'基准'},{w:'optimize',p:'/ˈɒp.tɪ.maɪz/',m:'优化'},{w:'initiative',p:'/ɪˈnɪʃ.ə.tɪv/',m:'倡议'},{w:'accountability',p:'/əˌkaʊn.təˈbɪl.ə.ti/',m:'责任感'},{w:'alignment',p:'/əˈlaɪn.mənt/',m:'对齐'},{w:'scalable',p:'/ˈskeɪ.lə.bəl/',m:'可扩展'},{w:'leverage',p:'/ˈlev.ər.ɪdʒ/',m:'利用'},{w:'streamline',p:'/ˈstriːm.laɪn/',m:'精简'},{w:'onboarding',p:'/ˈɒn.bɔːr.dɪŋ/',m:'入职'},{w:'deliverable',p:'/dɪˈlɪv.ər.ə.bəl/',m:'交付物'},{w:'touch base',p:'/tʌtʃ beɪs/',m:'碰头'},{w:'follow up',p:'/ˈfɒl.əʊ ʌp/',m:'跟进'},{w:'circle back',p:'/ˈsɜː.kəl bæk/',m:'回头再议'}];
+const SCENARIOS=[{t:'📧 写邮件：请求反馈',c:`Subject: Feedback Request\n\nHi Team,\n\nI've drafted the Q3 content calendar and would love your input.\nKey highlights:\n- Focus on "midlife women wellness" series\n- 3 tentpole campaigns\n\nPlease share your thoughts by Friday. Thanks!\n\nBest,\n[Your Name]`,tip:'💡 礼貌开头→需求→重点→时间节点'},{t:'🗣️ 会议发言：表达观点',c:`"I'd like to add something. From my perspective, we should prioritize the wellness series. The engagement data shows our audience resonates with health topics. What does everyone think?"`,tip:'💡 插话→观点→数据→邀请讨论'},{t:'📊 汇报进度',c:`"Quick update: We're at 70%. First 3 articles live, averaging 85K reads. Next milestone: video companions by Wednesday."`,tip:'💡 进度→数据→下一步→时间'}];
+function rEng(){const today=td(),done=S.english.ld===today,dow=new Date().getDay();document.getElementById('es').textContent=S.english.streak||0;document.getElementById('estats').innerHTML=`<div class="stat-card"><div class="n">${S.english.wl||0}</div><div class="l">📝已学</div></div><div class="stat-card"><div class="n">${done?'✅':'⏳'}</div><div class="l">今日</div></div><div class="stat-card"><div class="n">${Object.keys(S.english.md||{}).length}</div><div class="l">⭐掌握</div></div>`;const si=(new Date().getDate()*7)%WORDS.length,tw=[];for(let i=0;i<15;i++)tw.push({...WORDS[(si+i)%WORDS.length]});document.getElementById('wg').innerHTML=tw.map(w=>{const ms=(S.english.md||{})[w.w];return `<div class="word-card${ms?' mastered':''}"><div class="w">${w.w}</div><div class="p">${w.p}</div><div class="m">${w.m}</div>${!ms?`<button class="kb" onclick="mw('${w.w}')">✅认识</button>`:`<span style="font-size:8px;color:var(--p400)">已掌握✓</span>`}</div>`}).join('');const ss=[1,3,5].includes(dow);document.getElementById('stitle').style.display=ss?'':'none';document.getElementById('sc').style.display=ss?'':'none';if(ss){const si2=Math.floor(new Date().getDate()/7)%SCENARIOS.length,s=SCENARIOS[si2];document.getElementById('sc').innerHTML=`<h4>${s.t}</h4><pre>${s.c}</pre><p style="font-size:8px;color:var(--p500);margin-top:3px">${s.tip}</p>`}}
+function mw(w){S.english.md=S.english.md||{};S.english.md[w]=true;sv('english',S.english);rEng()}
+function markEng(){const today=td();if(S.english.ld===today){toast('今天已打卡~');return}const y=new Date();y.setDate(y.getDate()-1);if(S.english.ld===y.toISOString().slice(0,10))S.english.streak=(S.english.streak||0)+1;else S.english.streak=1;S.english.ld=today;S.english.wl=(S.english.wl||0)+15;sv('english',S.english);rEng();toast(`🎉 连续${S.english.streak}天！`)}
+
+console.log('🌸 小粉工作台 v4 就绪！');
+</script>
+</body>
+</html>
