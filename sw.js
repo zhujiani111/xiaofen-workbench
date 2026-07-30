@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xiaofen-workbench-v11';
+const CACHE_NAME = 'xiaofen-workbench-v12';
 const urlsToCache = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', event => {
