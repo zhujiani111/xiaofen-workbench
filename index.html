@@ -3513,6 +3513,46 @@ function mw(w){
 function rEng(){const today=td(),done=S.english.ld===today,dow=new Date().getDay();document.getElementById('es').textContent=S.english.streak||0;document.getElementById('estats').innerHTML=`<div class="stat-card"><div class="n">${S.english.wl||0}</div><div class="l">📝已学</div></div><div class="stat-card"><div class="n">${done?'✅':'⏳'}</div><div class="l">今日</div></div><div class="stat-card"><div class="n">${Object.keys(S.english.md||{}).length}</div><div class="l">⭐掌握</div></div>`;const wordSrc=WORDS_CACHE.length?WORDS_CACHE:WORDS;const tw=wordSrc.slice(0,15);document.getElementById('wg').innerHTML=tw.map(w=>{const ms=(S.english.md||{})[w.w];return `<div class="word-card${ms?' mastered':''}"><div class="w">${w.w}</div><div class="p">${w.p}</div><div class="m">${w.m}</div>${w.s?`<div style="font-size:10px;color:var(--g600);margin-top:4px;line-height:1.4;font-style:italic">"${w.s}"</div>`:''}${!ms?`<button class="kb" onclick="mw('${w.w}')">✅认识</button>`:`<span style="font-size:10px;color:var(--p400)">已掌握✓</span>`}</div>`}).join('');const ss=[1,3,5].includes(dow);document.getElementById('stitle').style.display=ss?'':'none';document.getElementById('sc').style.display=ss?'':'none';if(ss){const si2=Math.floor(new Date().getDate()/7)%SCENARIOS.length,s=SCENARIOS[si2];document.getElementById('sc').innerHTML=`<h4>${s.t}</h4><pre>${s.c}</pre><p style="font-size:11px;color:var(--p500);margin-top:6px">${s.tip}</p>`}}
 function markEng(){const today=td();if(S.english.ld===today){toast('今天已打卡~');return}const y=new Date();y.setDate(y.getDate()-1);if(S.english.ld===y.toISOString().slice(0,10))S.english.streak=(S.english.streak||0)+1;else S.english.streak=1;S.english.ld=today;S.english.wl=(S.english.wl||0)+15;sv('english',S.english);rEng();toast(`🎉 连续${S.english.streak}天！`)}
 
+// ============ EXERCISE ============
+function rEx(){
+  const plan=EX_CACHE.length?EX_CACHE:EX;
+  const today=new Date().getDay();
+  const dow=today===0?6:today-1;
+  const doneDays=S.exercise.wd||{};
+  const wk=getWeekKey();
+  const done=dow>=0?doneDays[wk]||[]:[];
+  const doneCount=Object.values(done).filter(Boolean).length;
+  document.getElementById('exStats').innerHTML=`<div class="stat-card"><div class="n">${doneCount}</div><div class="l">🏅本周完成</div></div><div class="stat-card"><div class="n">${7-doneCount}</div><div class="l">⏳剩余</div></div><div class="stat-card"><div class="n">🔥${S.exercise.streak||0}</div><div class="l">周连续</div></div>`;
+  document.getElementById('exPlan').innerHTML=plan.map((day,i)=>{
+    const isToday=i===dow;
+    const isDone=done[i];
+    return `<div class="card" style="margin:8px 0;border-left:4px solid ${isToday?'var(--p400)':isDone?'#2E8B57':'var(--g200)'};${isDone?'opacity:.7':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span><b>${day.f||''} ${day.d}</b> · ${day.t}</span>
+        ${isDone?'<span style="color:#2E8B57;font-size:12px">✅ 完成</span>':isToday?`<button class="btn btn-sm btn-p" onclick="markEx(${i})">打卡</button>`:`<span style="font-size:11px;color:var(--g400)">--</span>`}
+      </div>
+      <div style="margin-top:8px">${(day.items||[]).map(it=>`<div style="font-size:12px;color:var(--g700);padding:3px 0">• ${it.n} · ${it.dr||''}${it.lk?` <a href="${it.lk}" target="_blank" style="font-size:10px;color:var(--p400)">▶跟练</a>`:''}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+function getWeekKey(){
+  const d=new Date();
+  const start=new Date(d.getFullYear(),0,1);
+  return Math.ceil(((d-start)/86400000+start.getDay()+1)/7);
+}
+function markEx(i){
+  const wk=getWeekKey();
+  S.exercise.wd=S.exercise.wd||{};
+  S.exercise.wd[wk]=S.exercise.wd[wk]||{};
+  if(S.exercise.wd[wk][i]){toast('今天已打卡~');return}
+  S.exercise.wd[wk][i]=true;
+  const doneCount=Object.values(S.exercise.wd[wk]).filter(Boolean).length;
+  if(doneCount>=3)S.exercise.streak=(S.exercise.streak||0)+1;
+  sv('exercise',S.exercise);
+  rEx();
+  toast(`🎉 本周第${doneCount}次！`);
+}
+
 // ============ FINANCE（记账本） ============
 function rFin(){
   const records=S.finance.records||[];
