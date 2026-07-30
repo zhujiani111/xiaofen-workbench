@@ -181,7 +181,7 @@ def fetch_xiaohongshu_hot():
                     'hot': hot_val,
                     'desc': f"小红书热搜 · 热度{score_str}",
                     'src': '小红书',
-                    'url': item.get('link') or item.get('url') or f"https://www.xiaohongshu.com/search_result?keyword={requests.utils.quote(title)}",
+                    'url': item.get('link') or item.get('url') or f"https://www.xiaohongshu.com/search_result?keyword={requests.utils.quote(title)}&source=web_search_result_notes",
                 })
     except Exception as e:
         print(f"  ⚠️ 小红书: {e}")
