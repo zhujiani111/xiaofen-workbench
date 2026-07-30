@@ -966,12 +966,6 @@ function getWeekMenu(){
   if(MENU_CACHE.length)return MENU_CACHE;
   return getSeasonalPool();
 }
-let MENU_CACHE=[];
-async function loadMenu(){
-  try{const r=await fetch('./data/weekly_menu.json');if(r.ok){const d=await r.json();if(d.menus&&d.menus.length){MENU_CACHE=d.menus;rFood();return}}}catch(e){}
-  genLocalMenu();rFood();
-}
-function getWeekMenu(){if(MENU_CACHE.length)return MENU_CACHE;const pool=[];MENU_POOL.forEach(cat=>cat.items.forEach(item=>pool.push({...item,cat:cat.cat})));const ratings=S.food.menuRatings||{};const sorted=pool.sort((a,b)=>(ratings[b.n]||3)-(ratings[a.n]||3));const picks=[];for(let i=0;i<7;i++)picks.push(sorted[i]);const used=new Set(picks.map(p=>p.n));for(let i=0;i<sorted.length&&picks.length<9;i++)if(!used.has(sorted[i].n))picks.push(sorted[i]);return picks.slice(0,9)}
 function rateMenu(name,rating){S.food.menuRatings=S.food.menuRatings||{};S.food.menuRatings[name]=rating;sv('food',S.food);rFood();toast(`⭐ 评分 ${rating}/5`)}
 function handleFoodPhoto(e){const f=e.target.files[0];if(!f)return;toast('📸 分析中...');setTimeout(()=>{const foods=['米饭','番茄炒蛋','鸡胸肉','炒青菜','清蒸鱼','沙拉','饺子','三明治'];document.getElementById('fpResult').innerHTML=`<p style="font-size:12px;color:var(--g700);margin-bottom:8px">可能是：</p><div style="display:flex;flex-wrap:wrap;gap:6px">${foods.map(f=>`<span class="quick-tag" onclick="confirmPF('${f}')">${f} ~${FDB[f]?.k||'?'}kcal</span>`).join('')}</div>`;toast('✅ 点击确认')},600)}
 function confirmPF(name){const d=FDB[name]||{k:100,p:0,f:0,c:0,fb:0};S.food.records.push({date:td(),meal:'lunch',name,kcal:d.k,protein:d.p,fat:d.f,carbs:d.c,fiber:d.fb,time:new Date().toISOString()});sv('food',S.food);document.getElementById('fpResult').innerHTML='';document.getElementById('fpInput').value='';rFood();toast(`✅ ${name}（${d.k}kcal）`)}
