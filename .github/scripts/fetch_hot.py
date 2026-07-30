@@ -4,90 +4,428 @@ from datetime import datetime, timedelta
 import requests
 
 OUT = "data"
+NOW_STR = None
+
+def _now():
+    global NOW_STR
+    if not NOW_STR:
+        NOW_STR = datetime.now().strftime('%H:%M')
+    return NOW_STR
 
 # ============================================================
-# 1. 热点：抓取百度热搜 + 微博热搜
+# 1. 热点：全渠道抓取 + 方向分类 + 选题角度
 # ============================================================
-def fetch_hot():
-    topics = []
 
-    # 尝试百度热搜
-    try:
-        resp = requests.get("https://top.baidu.com/board?tab=realtime",
-                          headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15"},
-                          timeout=15)
-        if resp.status_code == 200:
-            # 解析百度热搜标题
-            titles = re.findall(r'<div class="c-single-text-ellipsis">(.*?)</div>', resp.text)
-            hot_nums = re.findall(r'<div class="hot-index[^"]*">(\d+)</div>', resp.text)
-            for i, t in enumerate(titles[:10]):
-                clean = re.sub(r'<[^>]+>', '', t).strip()
-                if clean and len(clean) > 2:
-                    topics.append({
-                        'tag': 'news', 'tt': '百度热搜',
-                        'title': clean,
-                        'desc': f'实时搜索指数 {hot_nums[i] if i < len(hot_nums) else "🔥"}',
-                        'src': '百度', 'tm': '实时'
-                    })
-    except Exception as e:
-        print(f"Baidu fetch error: {e}")
+# --- 四大方向关键词词典 ---
+DIRECTION_KEYWORDS = {
+    'parenting': {
+        'tt': '育儿干货',
+        'keywords': [
+            '育儿', '宝宝', '婴儿', '辅食', '母乳', '孕期', '产检', '早教', '幼儿园',
+            '亲子', '带娃', '宝妈', '小学', '作业', '辅导', '成绩', '身高', '发育',
+            '疫苗', '发烧', '湿疹', '过敏', '近视', '牙齿', '绘本', '动画', '屏幕',
+            '兴趣班', '学区', '入园', '青春期', '叛逆', '校园', '欺凌', '性教育',
+            '暑假', '寒假', '陪伴', '安全座椅', '推车', '玩具', 'ADHD', '自闭',
+            '发育迟缓', '孩子', '女儿', '儿子', '娃', '家长', '老师', '学校',
+            '教养', '习惯', '专注力', '睡眠', '感统', '爬行', '走路', '说话',
+            '断奶', '夜奶', '尿布', '如厕', '挑食', '偏食', '长高', '补钙',
+            'DHA', '益生菌', '微量元素', '儿保', '体检', '生长曲线', '蒙台梭利',
+            '瑞吉欧', '华德福', '在家早教', '自然教育', '森林学校', '延迟满足',
+            '情绪管理', '社交能力', '语言发育', '英语启蒙', '数学启蒙', '编程',
+            '儿童心理', '安全感', '依恋', '分离焦虑', '二胎', '三胎', '手足',
+            '单亲', '重组家庭', '隔代育儿', '奶奶', '外婆', '保姆', '月嫂',
+        ],
+    },
+    'women': {
+        'tt': '中女话题',
+        'keywords': [
+            '女性', '中女', '30岁', '35岁', '40岁', '更年期', '围绝经期',
+            '月经', '生理期', '妇科', '职场妈妈', '全职妈妈', '独立', '自我成长',
+            '觉醒', '婚姻', '离婚', '婆媳', '婆婆', '媳妇', '彩礼', '产假',
+            '产后', '抑郁', '焦虑', '闺蜜', '姐妹', '年龄焦虑', '职场转型',
+            '回职场', '女性健康', '卵巢', '子宫', '乳腺', 'HPV', '宫颈',
+            '避孕', '备孕', '试管', '冻卵', '晚婚', '不婚', '独居女性',
+            '女权', '性别平等', '同工同酬', '职场歧视', '隐性劳动', '情绪劳动',
+            '容貌焦虑', '身材焦虑', '健身', '减肥', '护肤', '抗衰', '医美',
+            '穿搭', '发型', '素颜', '自然美', '断舍离', '极简生活',
+            '副业', '自由职业', '数字游民', '裸辞', 'gap', '间隔年',
+            '女性力量', '女性榜样', '她经济', '她力量',
+        ],
+    },
+    'safety': {
+        'tt': '消费安全',
+        'keywords': [
+            '消费', '食品', '安全', '致癌', '超标', '召回', '造假', '假货',
+            '质量问题', '检测', '曝光', '维权', '投诉', '315', '母婴产品',
+            '奶粉', '纸尿裤', '辅食', '添加剂', '防腐剂', '农残', '激素',
+            '正品', '海淘', '代购', '退款', '纠纷', '消费报告', '母婴消费',
+            '儿童用品', '童装', '童鞋', '甲醛', '重金属', '塑化剂', '双酚A',
+            '奶瓶', '水杯', '餐具', '爬行垫', '围栏', '床围', '床垫',
+            '婴儿床', '婴儿车', '安全提篮', '增高垫', '防晒霜', '驱蚊',
+            '沐浴露', '洗发水', '湿巾', '棉柔巾', '洗衣液', '消毒柜',
+            '温奶器', '调奶器', '恒温壶', '吸奶器', '储奶袋', '奶嘴',
+            '磨牙棒', '牙胶', '曼哈顿球', '布书', '声光玩具', '电子烟',
+            '网红食品', '直播间', '带货', '假一赔十', '无理由退货',
+            '预制菜', '外卖', '食品安全', '餐饮卫生', '后厨',
+        ],
+    },
+    'emotion': {
+        'tt': '情绪共鸣',
+        'keywords': [
+            '情绪', '崩溃', '内耗', '焦虑', '压力', '疲惫', '累', '丧',
+            '治愈', '温暖', '感动', '泪目', '心酸', '无奈', '释然', '和解',
+            '摆烂', '松弛感', '佛系', '鸡娃', '内卷', '躺平', '独处',
+            '休息', '放假', '周末', '旅游', '出行', '家庭', '老公', '爸爸带娃',
+            '辅导作业', '发脾气', '内疚', '妈妈群', '一个人', '深夜', '失眠',
+            '偷偷哭', '坚持', '放弃', '后悔', '庆幸', '选择', '牺牲',
+            '委屈', '理解', '包容', '忍耐', '爆发', '冷战', '沟通', '吵架',
+            '原生家庭', '童年', '创伤', '治愈童年', '和解', '放下',
+            '幸福', '快乐', '满足', '感恩', '珍惜', '当下', '简单',
+            '朋友', '聚会', '聊天', '吐槽', '八卦', '追剧', '综艺',
+            '读书', '咖啡', '花', '阳光', '晴天', '雨天', '春天', '秋天',
+            '小确幸', '日常', '生活', '烟火气', '慢生活',
+        ],
+    },
+}
 
-    # 尝试微博热搜 API
+# --- 各平台抓取函数 ---
+
+def fetch_weibo_hot():
+    """微博热搜，返回 [{title, hot, desc, src}]"""
+    items = []
     try:
-        resp = requests.get("https://weibo.com/ajax/side/hotSearch",
-                          headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", "Referer": "https://weibo.com/"},
-                          timeout=15)
+        resp = requests.get(
+            "https://weibo.com/ajax/side/hotSearch",
+            headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+                     "Referer": "https://weibo.com/"},
+            timeout=15)
         if resp.status_code == 200:
             data = resp.json()
-            items = data.get('data', {}).get('realtime', [])[:10]
-            for item in items:
+            realtime = data.get('data', {}).get('realtime', [])[:20]
+            for item in realtime:
                 word = item.get('word', '').strip()
-                if word and not any(t['title'] == word for t in topics):
-                    topics.append({
-                        'tag': 'trend', 'tt': '微博热搜',
-                        'title': word,
-                        'desc': f"热搜第{item.get('rank','')}名",
-                        'src': '微博', 'tm': '实时'
+                if not word or len(word) < 3:
+                    continue
+                # 过滤掉纯娱乐明星类（无育儿/女性/消费/情感关联的明星八卦）
+                category = item.get('category', '')
+                # 优先保留有育儿/女性/健康/社会/情感标签的
+                relevant_cats = ['育儿', '女性', '健康', '社会', '情感', '时事', '教育', '法律']
+                if category and not any(c in category for c in relevant_cats):
+                    continue
+                items.append({
+                    'title': word,
+                    'hot': item.get('num', 0) or 0,
+                    'desc': f"热搜第{item.get('rank', '?')}名 · 热度{item.get('num', '?')}",
+                    'src': '微博',
+                })
+    except Exception as e:
+        print(f"  ⚠️ 微博: {e}")
+    return items
+
+
+def fetch_douyin_hot():
+    """抖音热点，返回 [{title, hot, desc, src}]"""
+    items = []
+    try:
+        resp = requests.get(
+            "https://uapis.cn/api/v1/misc/hotboard?type=douyin",
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=15)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get('code') == 200 and 'data' in data:
+                for item in data['data'][:20]:
+                    title = (item.get('title') or item.get('word') or '').strip()
+                    if not title or len(title) < 3:
+                        continue
+                    hot_val = item.get('hot_value') or item.get('hotindex') or 0
+                    try:
+                        hot_val = int(hot_val)
+                    except:
+                        hot_val = 0
+                    items.append({
+                        'title': title,
+                        'hot': hot_val,
+                        'desc': f"抖音热点 · 热度{hot_val}",
+                        'src': '抖音',
                     })
     except Exception as e:
-        print(f"Weibo fetch error: {e}")
+        print(f"  ⚠️ 抖音: {e}")
+    return items
 
-    # 补充公众号选题相关（每天动态生成，保证每次不同）
-    today = datetime.now()
-    seed = int(today.strftime('%Y%m%d'))
-    rng = random.Random(seed)
 
-    backup_pool = [
-        {'tag': 'competitor', 'tt': '竞品', 'title': '年糕妈妈近3天爆款选题分析', 'desc': '主号「中女情感+健康警示+育儿故事」三线并进。分析竞品爆款，找差异化切口。', 'src': '年糕妈妈'},
-        {'tag': 'idea', 'tt': '灵感', 'title': '「妈妈的情绪管理」UGC征集方向', 'desc': '发起"今天你崩溃了吗"话题征集，引导UGC互动。情感共鸣+高互动。', 'src': '选题建议'},
-        {'tag': 'news', 'tt': '健康', 'title': '35岁+女性健康：围绝经期提前的5个信号', 'desc': '多篇医学报道聚焦女性早更问题。与「中女健康」选题高度相关，可科普+真实案例切入。', 'src': '丁香医生'},
-        {'tag': 'competitor', 'tt': '竞品', 'title': '丁香妈妈最新育儿爆文盘点', 'desc': '分析竞品文章结构、标题套路、互动策略。可借鉴其「干货+情感」双线模式。', 'src': '丁香妈妈'},
-        {'tag': 'trend', 'tt': '小红书', 'title': '「暑假高质量陪伴」话题持续火爆', 'desc': '#高质量陪伴# 阅读量破3亿。宝妈们分享假期带娃新玩法，素材丰富。', 'src': '小红书'},
-        {'tag': 'idea', 'tt': '灵感', 'title': '「老公带娃翻车现场」轻松选题', 'desc': '征集爸爸带娃搞笑瞬间。轻松内容+高互动+UGC，天然适合周末发。', 'src': '选题建议'},
-        {'tag': 'trend', 'tt': '抖音', 'title': '「30+女性觉醒时刻」话题升温', 'desc': '越来越多30+女性分享职场转型、自我成长故事。情感共鸣类选题机会。', 'src': '抖音'},
-        {'tag': 'news', 'tt': '消费', 'title': '最新母婴消费报告：90后妈妈消费趋势', 'desc': '母婴消费升级方向解读。可结合电商广告植入，数据支撑+产品推荐。', 'src': '消费报告'},
-        {'tag': 'idea', 'tt': '灵感', 'title': '「反焦虑育儿」成为新潮流', 'desc': '越来越多年轻妈妈拒绝鸡娃，追求松弛感育儿。深度选题方向，可做系列。', 'src': '选题建议'},
-        {'tag': 'trend', 'tt': '趋势', 'title': '「精致穷养娃」VS「佛系放养」大讨论', 'desc': '社交平台两派妈妈激烈辩论。可做对比分析+观点输出，评论区必爆。', 'src': '社交平台'},
-        {'tag': 'news', 'tt': '政策', 'title': '多地出台最新托育补贴政策解读', 'desc': '年轻家庭育儿成本有望降低。可跟进本地落地情况，服务性选题。', 'src': '新华网'},
-        {'tag': 'competitor', 'tt': '竞品', 'title': '小红书母婴类爆文选题风向', 'desc': '分析小红书母婴赛道最新爆文，提炼可借鉴的选题公式和表达方式。', 'src': '小红书'},
-    ]
+def fetch_xiaohongshu_hot():
+    """小红书热点，返回 [{title, hot, desc, src}]"""
+    items = []
+    try:
+        resp = requests.get(
+            "https://60s.viki.moe/v2/rednote",
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=15)
+        if resp.status_code == 200:
+            data = resp.json()
+            topics = data.get('data', []) if isinstance(data, dict) else data
+            for item in topics[:20]:
+                title = (item.get('title') or item.get('word') or '').strip()
+                if not title or len(title) < 3:
+                    continue
+                score_str = str(item.get('score') or item.get('hot') or '0').replace('万', '0000').replace('w', '0000')
+                try:
+                    hot_val = int(float(score_str))
+                except:
+                    hot_val = 0
+                items.append({
+                    'title': title,
+                    'hot': hot_val,
+                    'desc': f"小红书热搜 · 热度{score_str}",
+                    'src': '小红书',
+                })
+    except Exception as e:
+        print(f"  ⚠️ 小红书: {e}")
+    return items
 
-    rng.shuffle(backup_pool)
-    # 补满到 10 条（如果抓取不够）
-    while len(topics) < 10:
-        for b in backup_pool:
-            if len(topics) >= 10:
-                break
-            if not any(t['title'] == b['title'] for t in topics):
-                topics.append(dict(b))
 
-    # 更新时间戳
-    now_str = datetime.now().strftime('%H:%M')
+def fetch_baidu_hot():
+    """百度热搜，返回 [{title, hot, desc, src}]"""
+    items = []
+    try:
+        resp = requests.get(
+            "https://top.baidu.com/board?tab=realtime",
+            headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15"},
+            timeout=15)
+        if resp.status_code == 200:
+            titles = re.findall(r'<div class="c-single-text-ellipsis">(.*?)</div>', resp.text)
+            hot_nums = re.findall(r'<div class="hot-index[^"]*">(\d+)</div>', resp.text)
+            for i, t in enumerate(titles[:15]):
+                clean = re.sub(r'<[^>]+>', '', t).strip()
+                if clean and len(clean) > 2:
+                    hi = int(hot_nums[i]) if i < len(hot_nums) else 0
+                    items.append({
+                        'title': clean,
+                        'hot': hi,
+                        'desc': f"百度热搜 · 指数{hot_nums[i] if i < len(hot_nums) else '🔥'}",
+                        'src': '百度',
+                    })
+    except Exception as e:
+        print(f"  ⚠️ 百度: {e}")
+    return items
+
+
+# --- 方向分类 ---
+
+def classify_direction(title, desc=''):
+    """对标题+描述做方向分类，返回 (tag, tt) 或 None"""
+    text = (title + ' ' + (desc or '')).lower()
+    scores = {}
+    for direction, config in DIRECTION_KEYWORDS.items():
+        score = sum(1 for kw in config['keywords'] if kw.lower() in text)
+        if score > 0:
+            scores[direction] = score
+    if not scores:
+        return None
+    best = max(scores, key=scores.get)
+    return (best, DIRECTION_KEYWORDS[best]['tt'])
+
+
+# --- 去重 ---
+
+def deduplicate_topics(topics):
+    """标题指纹去重"""
+    seen = set()
+    result = []
     for t in topics:
-        if t.get('tm') == '实时':
-            t['tm'] = f'今天 {now_str}'
+        fp = re.sub(r'[\s\W]+', '', t['title'])[:8].lower()
+        if fp and fp not in seen:
+            seen.add(fp)
+            result.append(t)
+    return result
 
-    return topics[:12]
+
+# --- 相关度评分 ---
+
+def calculate_relevance_score(title, desc, direction, hot_value=0):
+    """计算 0-100 相关度评分"""
+    text = (title + ' ' + (desc or '')).lower()
+    keywords = DIRECTION_KEYWORDS.get(direction, {}).get('keywords', [])
+    kw_count = sum(1 for kw in keywords if kw.lower() in text)
+    # 关键词匹配分 (0-50)
+    kw_score = min(kw_count * 8, 50)
+    # 热度归一化 (0-30)
+    hot_score = min(hot_value / 50000, 30) if hot_value else 15
+    # 标题长度合适度 (0-10)
+    title_score = 10 if 6 <= len(title) <= 30 else (6 if len(title) > 30 else 3)
+    # 随机微调 (0-10)
+    rng = random.Random(hash(title) % 10000)
+    random_bonus = rng.randint(0, 10)
+    return min(int(kw_score + hot_score + title_score + random_bonus), 100)
+
+
+# --- 选题角度模板 ---
+
+ANGLE_TEMPLATES = {
+    'parenting': [
+        '可从「{title}」切入，做育儿科普+实操指南。结构：问题现象→科学原理→妈妈自查清单→互动话题。标题方向：数据悬念+实用方案。',
+        '以妈妈视角解读「{title}」，先共情焦虑再给干货。差异化：闺蜜聊天式表达，拒绝说教。结尾引导"你家娃也这样吗？"UGC互动。',
+        '「{title}」适合做深度教养文。可从真实故事引入→专业观点背书→可操作建议。适合工作日干货档期。',
+    ],
+    'women': [
+        '「{title}」天然适合中女话题线。可做观点输出文：现象描述→数据支撑→观点输出→"姐妹们你们呢？"互动收尾。调性：犀利但不尖锐。',
+        '从「{title}」延伸到30+女性成长。结构：一个具体故事切入→群体画像→洞察金句→"原来我不是一个人"。高共鸣+高转发预期。',
+        '「{title}」可做情感故事文。用第一人称讲述→情绪铺垫→转折→治愈收尾。适合周三情感档期。',
+    ],
+    'safety': [
+        '「{title}」消费安全选题，做"妈妈必看"信息差服务。结构：事件还原→避坑指南→替代推荐（可植入）。高收藏+高转发。',
+        '从「{title}」切入做消费科普。用简单易懂的方式解释专业概念→妈妈自查清单→安全消费建议。差异化：不制造焦虑，给解决方案。',
+        '「{title}」适合做"买前必看"系列。可结合真实妈妈踩坑经历→产品对比→选购要点。天然适合电商广告植入。',
+    ],
+    'emotion': [
+        '「{title}」情绪共鸣选题，走"原来不止我这样"路线。可用真实投稿/UGC素材→群体共鸣→温暖收尾。结尾投票："你也这样吗？"',
+        '从「{title}」切入松弛感主题。用轻松口吻讲述→戳中痛点→温柔化解→"姐妹们放轻松"。适合周末轻松档期。',
+        '「{title}」可做治愈向内容。白描手法→细节打动→生活感悟→"日子就是这样，慢慢来"。调性：温暖不煽情。',
+    ],
+}
+
+
+def generate_angle(title, direction):
+    """规则模板生成选题角度"""
+    templates = ANGLE_TEMPLATES.get(direction, ANGLE_TEMPLATES['emotion'])
+    rng = random.Random(hash(title) % 1000)
+    template = rng.choice(templates)
+    return template.replace('{title}', title[:30])
+
+
+# --- 备用池（12条，四方向各3条，带角度）---
+
+BACKUP_POOL = [
+    # 育儿干货
+    {'tag': 'parenting', 'tt': '育儿干货', 'title': '「暑假高质量陪伴」话题持续火爆', 'desc': '#高质量陪伴# 全平台阅读量破3亿。宝妈们分享假期带娃新玩法，素材丰富，可做陪伴清单类内容。', 'src': '行业观察', 'score': 75},
+    {'tag': 'parenting', 'tt': '育儿干货', 'title': '「反焦虑育儿」成为新潮流', 'desc': '越来越多年轻妈妈拒绝鸡娃，追求松弛感育儿。深度选题方向，可做系列。', 'src': '行业观察', 'score': 70},
+    {'tag': 'parenting', 'tt': '育儿干货', 'title': '丁香妈妈最新育儿爆文选题盘点', 'desc': '分析竞品文章结构、标题套路、互动策略。可借鉴「干货+情感」双线模式。', 'src': '行业观察', 'score': 65},
+    # 中女话题
+    {'tag': 'women', 'tt': '中女话题', 'title': '「30+女性觉醒时刻」话题持续升温', 'desc': '越来越多30+女性分享职场转型、自我成长故事。情感共鸣类选题机会，可做观点输出。', 'src': '行业观察', 'score': 75},
+    {'tag': 'women', 'tt': '中女话题', 'title': '35岁+女性健康：围绝经期提前的5个信号', 'desc': '多篇医学报道聚焦女性早更问题。与「中女健康」选题高度相关，可科普+真实案例切入。', 'src': '行业观察', 'score': 70},
+    {'tag': 'women', 'tt': '中女话题', 'title': '年糕妈妈近3天爆款选题方向分析', 'desc': '主号「中女情感+健康警示+育儿故事」三线并进。分析近期爆款，找差异化切口。', 'src': '行业观察', 'score': 65},
+    # 消费安全
+    {'tag': 'safety', 'tt': '消费安全', 'title': '最新母婴消费报告：90后妈妈消费趋势', 'desc': '母婴消费升级方向解读。可结合电商广告植入，数据支撑+产品推荐。', 'src': '行业观察', 'score': 70},
+    {'tag': 'safety', 'tt': '消费安全', 'title': '小红书母婴类爆文产品测评风向', 'desc': '分析小红书母婴赛道最新测评类爆文，提炼可借鉴的种草公式和避坑指南。', 'src': '行业观察', 'score': 65},
+    {'tag': 'safety', 'tt': '消费安全', 'title': '多地出台最新托育补贴政策解读', 'desc': '年轻家庭育儿成本有望降低。可跟进本地落地情况，服务性选题。', 'src': '行业观察', 'score': 60},
+    # 情绪共鸣
+    {'tag': 'emotion', 'tt': '情绪共鸣', 'title': '「妈妈的情绪管理」UGC征集方向', 'desc': '发起"今天你崩溃了吗"话题征集，引导UGC互动。情感共鸣+高互动预期。', 'src': '行业观察', 'score': 75},
+    {'tag': 'emotion', 'tt': '情绪共鸣', 'title': '「老公带娃翻车现场」轻松选题', 'desc': '征集爸爸带娃搞笑瞬间。轻松内容+高互动+UGC，天然适合周末档期。', 'src': '行业观察', 'score': 70},
+    {'tag': 'emotion', 'tt': '情绪共鸣', 'title': '「精致养娃」VS「佛系放养」大讨论', 'desc': '社交平台两派妈妈激烈辩论。可做对比分析+观点输出，评论区必爆。', 'src': '行业观察', 'score': 65},
+]
+
+
+def fill_from_backup_pool(topics):
+    """从备用池补齐到10条，保证四个方向都有覆盖"""
+    if len(topics) >= 10:
+        return topics[:10]
+    rng = random.Random(int(datetime.now().strftime('%Y%m%d')))
+    pool = list(BACKUP_POOL)
+    rng.shuffle(pool)
+    existing_titles = {t['title'] for t in topics}
+    # 优先补齐缺少的方向
+    existing_dirs = {t['tag'] for t in topics}
+    for d in ['parenting', 'women', 'safety', 'emotion']:
+        if d not in existing_dirs:
+            for b in pool:
+                if b['tag'] == d and b['title'] not in existing_titles:
+                    item = dict(b)
+                    item['tm'] = f"今天 {_now()}"
+                    item['angle'] = generate_angle(b['title'], b['tag'])
+                    topics.append(item)
+                    existing_titles.add(b['title'])
+                    break
+    # 补齐数量
+    for b in pool:
+        if len(topics) >= 10:
+            break
+        if b['title'] not in existing_titles:
+            item = dict(b)
+            item['tm'] = f"今天 {_now()}"
+            item['angle'] = generate_angle(b['title'], b['tag'])
+            topics.append(item)
+            existing_titles.add(b['title'])
+    return topics[:10]
+
+
+# --- 主编函数 ---
+
+def fetch_hot():
+    """全渠道抓取→方向分类→去重评分→选题角度→精选10条"""
+    print("🔍 正在抓取全渠道热点...")
+    raw_items = []
+
+    # 微博
+    try:
+        wb = fetch_weibo_hot()
+        raw_items.extend(wb)
+        print(f"  微博: {len(wb)} 条")
+    except Exception as e:
+        print(f"  微博异常: {e}")
+
+    # 抖音
+    try:
+        dy = fetch_douyin_hot()
+        raw_items.extend(dy)
+        print(f"  抖音: {len(dy)} 条")
+    except Exception as e:
+        print(f"  抖音异常: {e}")
+
+    # 小红书
+    try:
+        xhs = fetch_xiaohongshu_hot()
+        raw_items.extend(xhs)
+        print(f"  小红书: {len(xhs)} 条")
+    except Exception as e:
+        print(f"  小红书异常: {e}")
+
+    # 百度
+    try:
+        bd = fetch_baidu_hot()
+        raw_items.extend(bd)
+        print(f"  百度: {len(bd)} 条")
+    except Exception as e:
+        print(f"  百度异常: {e}")
+
+    # 去重
+    raw_items = deduplicate_topics(raw_items)
+    print(f"  去重后: {len(raw_items)} 条")
+
+    # 方向分类 + 评分 + 选题角度
+    classified = []
+    for item in raw_items:
+        result = classify_direction(item['title'], item.get('desc', ''))
+        if result:
+            tag, tt = result
+            score = calculate_relevance_score(
+                item['title'], item.get('desc', ''), tag, item.get('hot', 0))
+            classified.append({
+                'tag': tag,
+                'tt': tt,
+                'title': item['title'],
+                'desc': item.get('desc', ''),
+                'src': item.get('src', ''),
+                'tm': f"今天 {_now()}",
+                'score': score,
+                'angle': generate_angle(item['title'], tag),
+            })
+
+    print(f"  匹配到方向: {len(classified)} 条")
+    # 按评分排序
+    classified.sort(key=lambda x: x['score'], reverse=True)
+    topics = classified[:10]
+
+    # 补齐
+    topics = fill_from_backup_pool(topics)
+
+    # 方向分布统计
+    dir_counts = {}
+    for t in topics:
+        dir_counts[t['tt']] = dir_counts.get(t['tt'], 0) + 1
+    print(f"  方向分布: {dir_counts}")
+
+    return topics
 
 
 # ============================================================
